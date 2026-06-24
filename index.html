@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Central da Agência</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.14.0/dist/tabler-icons.min.css">
+<style>
+:root{
+  --bg:#ffffff;--bg2:#f8f8f6;--bg3:#f1efe8;
+  --text:#1a1a1a;--text2:#666;--text3:#999;
+  --border:#e0ddd5;--border2:#ccc;
+  --blue:#185FA5;--blue-bg:#E6F1FB;--blue-text:#0C447C;
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-text:#27500A;
+  --amber:#854F0B;--amber-bg:#FAEEDA;--amber-text:#633806;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-text:#791F1F;
+  --purple:#534AB7;--purple-bg:#EEEDFE;--purple-text:#3C3489;
+  --gray-bg:#F1EFE8;--gray-text:#444441;
+  --radius:8px;--radius-lg:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:var(--text);background:var(--bg3);min-height:100vh}
+/* LAYOUT */
+.app{display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--bg);border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;gap:16px;height:52px;position:sticky;top:0;z-index:100}
+.topbar-logo{font-size:15px;font-weight:600;color:var(--blue);display:flex;align-items:center;gap:8px}
+.topbar-nav{display:flex;gap:2px;overflow-x:auto;flex:1}
+.nav-btn{padding:6px 14px;border-radius:var(--radius);border:none;background:transparent;color:var(--text2);cursor:pointer;font-size:13px;white-space:nowrap;display:flex;align-items:center;gap:6px;transition:all .15s}
+.nav-btn:hover{background:var(--bg2);color:var(--text)}
+.nav-btn.active{background:var(--blue-bg);color:var(--blue-text);font-weight:500}
+.main{flex:1;padding:20px;max-width:1100px;margin:0 auto;width:100%}
+/* SCREENS */
+.screen{display:none}.screen.on{display:block}
+/* CARDS */
+.raised{background:var(--bg);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:14px}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px}
+.metric{background:var(--bg2);border-radius:var(--radius);padding:14px;text-align:center}
+.metric .val{font-size:22px;font-weight:600;margin-top:4px}
+.metric .lbl{font-size:11px;color:var(--text2)}
+/* FORMS */
+label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px;margin-top:10px}
+input,select,textarea{width:100%;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:13px;font-family:inherit;outline:none;transition:border .15s}
+input:focus,select:focus,textarea:focus{border-color:var(--blue)}
+textarea{resize:vertical;min-height:60px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.col{flex:1;min-width:130px}
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:var(--radius);border:0.5px solid var(--border2);background:transparent;color:var(--text);cursor:pointer;font-size:13px;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:all .15s}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--blue-bg);color:var(--blue-text);border-color:var(--blue);font-weight:500}
+.btn-primary:hover{background:#d0e5f7}
+.btn-success{background:var(--green-bg);color:var(--green-text);border-color:var(--green);font-weight:500}
+.btn-sm{padding:5px 11px;font-size:12px}
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:var(--radius);font-size:11px;font-weight:500}
+.b-blue{background:var(--blue-bg);color:var(--blue-text)}
+.b-green{background:var(--green-bg);color:var(--green-text)}
+.b-amber{background:var(--amber-bg);color:var(--amber-text)}
+.b-red{background:var(--red-bg);color:var(--red-text)}
+.b-purple{background:var(--purple-bg);color:var(--purple-text)}
+.b-gray{background:var(--gray-bg);color:var(--gray-text)}
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 10px;font-size:11px;color:var(--text2);border-bottom:0.5px solid var(--border);font-weight:500;background:var(--bg2)}
+td{padding:9px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg2)}
+/* SECTION TITLE */
+.sec-title{font-size:15px;font-weight:600;margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--text)}
+/* NOTIF */
+.notif{border-left:3px solid;padding:10px 12px;border-radius:0 var(--radius) var(--radius) 0;margin-bottom:8px;font-size:13px}
+.notif.warn{border-color:#EF9F27;background:#FAEEDA44}
+.notif.info{border-color:var(--blue);background:var(--blue-bg)}
+.notif.ok{border-color:var(--green);background:var(--green-bg)}
+.notif.danger{border-color:var(--red);background:var(--red-bg)}
+.notif .nt{font-size:11px;color:var(--text2);margin-bottom:2px}
+/* PROGRESS */
+.progress{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:4px}
+.progress-bar{height:100%;border-radius:3px;transition:width .3s}
+/* AVATAR */
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--blue-bg);color:var(--blue-text);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0}
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.tab-btn{padding:5px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:12px}
+.tab-btn.on{background:var(--bg2);color:var(--text);border-color:var(--border2);font-weight:500}
+/* HOTEL */
+.hotel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:10px}
+.hotel-card{border:0.5px solid var(--border2);border-radius:var(--radius-lg);overflow:hidden;cursor:pointer;transition:all .15s}
+.hotel-card:hover{border-color:var(--blue)}
+.hotel-card.sel{border:2px solid var(--blue)}
+.hotel-img{height:80px;background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:30px}
+.hotel-body{padding:10px 12px}
+.hotel-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.hotel-loc{font-size:11px;color:var(--text2);margin-bottom:5px}
+.hotel-price{font-size:15px;font-weight:600;color:var(--blue)}
+.hotel-price span{font-size:11px;font-weight:400;color:var(--text2)}
+.stars{color:#BA7517;font-size:11px;margin-bottom:3px}
+/* EXTRA */
+.extra-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:10px}
+.extra-card{border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;transition:all .15s}
+.extra-card:hover{background:var(--bg2)}
+.extra-card.sel{border-color:var(--green);background:var(--green-bg)}
+/* ROTEIRO */
+.rot-dia{border-left:2px solid var(--border);padding-left:12px;margin-bottom:14px}
+.rot-dia.ativo{border-color:var(--blue)}
+.rot-num{font-size:11px;color:var(--text2);margin-bottom:2px}
+.rot-titulo{font-size:13px;font-weight:600;margin-bottom:4px}
+.rot-item{font-size:12px;color:var(--text2);padding:2px 0;display:flex;align-items:flex-start;gap:5px}
+/* PLATAFORMAS */
+.plat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin-top:10px}
+.plat-card{border:0.5px solid var(--border);border-radius:var(--radius);padding:11px 12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .15s;user-select:none}
+.plat-card:hover{background:var(--bg2)}
+.plat-card.sel{border-color:var(--blue);background:var(--blue-bg)}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+/* RESUMO */
+.resumo-linha{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:13px}
+.resumo-linha:last-child{border-bottom:none;font-weight:600;font-size:14px;padding-top:12px}
+/* WA BTN */
+.wa-btn-big{width:100%;padding:12px;border-radius:var(--radius);border:none;background:#25D366;color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.wa-btn-big:hover{background:#1ea355}
+.wa-btn{padding:5px 12px;border-radius:var(--radius);border:none;background:#25D366;color:#fff;cursor:pointer;font-size:12px;font-weight:500}
+.tg-btn{padding:5px 12px;border-radius:var(--radius);border:none;background:#229ED9;color:#fff;cursor:pointer;font-size:12px;font-weight:500}
+/* MARGEM */
+.margem-box{border-radius:var(--radius-lg);padding:16px;margin-top:14px;border:0.5px solid}
+.margem-box.boa{border-color:var(--green);background:var(--green-bg)}
+.margem-box.ok{border-color:#BA7517;background:var(--amber-bg)}
+.margem-box.ruim{border-color:var(--red);background:var(--red-bg)}
+.margem-box.neutro{border-color:var(--border);background:var(--bg2)}
+.m-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:12px}
+.m-card{background:rgba(255,255,255,.6);border-radius:var(--radius);padding:10px 12px}
+.m-val{font-size:22px;font-weight:600;margin:4px 0}
+.m-label{font-size:11px;color:var(--text2)}
+/* SPINNER */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-box{text-align:center;padding:40px;color:var(--text2);font-size:13px}
+/* OPEN ALL BTN */
+.open-all-btn{width:100%;padding:11px;border-radius:var(--radius);border:none;background:var(--blue);color:#fff;cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px}
+.open-all-btn:hover{background:var(--blue-text)}
+/* MISC */
+.fornec-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.fornec-row:last-child{border-bottom:none}
+input[readonly]{background:var(--bg2);color:var(--text2)}
+.step{display:none}.step.on{display:block}
+.section-sep{height:1px;background:var(--border);margin:16px 0}
+@media(max-width:600px){.topbar-nav{gap:0}.nav-btn{padding:6px 10px;font-size:12px}.main{padding:12px}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-logo"><i class="ti ti-plane-tilt"></i> AgênciaApp</div>
+  <div class="topbar-nav">
+    <button class="nav-btn active" onclick="goScreen('dash',this)"><i class="ti ti-chart-bar"></i> Dashboard</button>
+    <button class="nav-btn" onclick="goScreen('nova',this)"><i class="ti ti-plus"></i> Nova emissão</button>
+    <button class="nav-btn" onclick="goScreen('emissoes',this)"><i class="ti ti-ticket"></i> Emissões</button>
+    <button class="nav-btn" onclick="goScreen('cotador',this)"><i class="ti ti-search"></i> Cotador</button>
+    <button class="nav-btn" onclick="goScreen('upsell',this)"><i class="ti ti-layout-grid"></i> Upsell</button>
+    <button class="nav-btn" onclick="goScreen('clientes',this)"><i class="ti ti-users"></i> Clientes</button>
+    <button class="nav-btn" onclick="goScreen('notif',this)"><i class="ti ti-bell"></i> Notificações</button>
+    <button class="nav-btn" onclick="goScreen('financeiro',this)"><i class="ti ti-cash"></i> Financeiro</button>
+    <button class="nav-btn" onclick="goScreen('fornecedores',this)"><i class="ti ti-building"></i> Fornecedores</button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- ===== DASHBOARD ===== -->
+<div class="screen on" id="s-dash">
+  <div class="metric-grid">
+    <div class="metric"><div class="lbl">Emissões no mês</div><div class="val" style="color:var(--blue)" id="d-total">0</div></div>
+    <div class="metric"><div class="lbl">Receita bruta</div><div class="val" style="color:var(--green)" id="d-receita">R$0</div></div>
+    <div class="metric"><div class="lbl">Lucro líquido</div><div class="val" style="color:var(--green)" id="d-lucro">R$0</div></div>
+    <div class="metric"><div class="lbl">Impostos pagos</div><div class="val" style="color:var(--red)" id="d-impostos">R$0</div></div>
+    <div class="metric"><div class="lbl">A receber</div><div class="val" style="color:var(--amber)" id="d-receber">R$0</div></div>
+    <div class="metric"><div class="lbl">NF pendentes</div><div class="val" style="color:var(--red)" id="d-nf">0</div></div>
+  </div>
+  <div class="row">
+    <div class="col raised" style="min-width:280px">
+      <div class="sec-title"><i class="ti ti-alert-triangle" style="color:var(--amber)"></i> Ações urgentes</div>
+      <div id="d-urgentes"><p style="color:var(--text2);font-size:13px">Nenhuma ação urgente.</p></div>
+    </div>
+    <div class="col raised" style="min-width:260px">
+      <div class="sec-title"><i class="ti ti-chart-pie"></i> Mix de emissão</div>
+      <div id="d-mix"><p style="color:var(--text2);font-size:13px">Nenhuma emissão ainda.</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NOVA EMISSÃO ===== -->
+<div class="screen" id="s-nova">
+  <div class="raised">
+    <div class="sec-title"><i class="ti ti-user"></i> Dados do cliente</div>
+    <div class="row">
+      <div class="col"><label>Nome completo</label><input id="f-nome" placeholder="Nome do passageiro"></div>
+      <div class="col"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div>
+      <div class="col"><label>Telefone (WhatsApp)</label><input id="f-tel" placeholder="(00) 00000-0000"></div>
+      <div class="col"><label>E-mail</label><input id="f-email" placeholder="email@cliente.com"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Agente responsável</label><input id="f-agente" placeholder="Seu nome"></div>
+    </div>
+  </div>
+  <div class="raised">
+    <div class="sec-title"><i class="ti ti-plane"></i> Dados da viagem</div>
+    <div class="row">
+      <div class="col"><label>Localizador / PNR</label><input id="f-pnr" placeholder="ABC123"></div>
+      <div class="col"><label>Companhia</label>
+        <select id="f-cia"><option>LATAM</option><option>GOL</option><option>Azul</option><option>American</option><option>TAP</option><option>Emirates</option><option>Outra</option></select>
+      </div>
+      <div class="col"><label>Tipo de emissão</label>
+        <select id="f-tipo"><option>LATAM Milhas</option><option>Azul Milhas</option><option>GOL Smiles</option><option>Pátria Consolidadora</option><option>Cativa Operadora</option><option>GDS Amadeus</option></select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Origem</label><input id="f-orig" placeholder="GRU" maxlength="3" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="col"><label>Destino</label><input id="f-dest" placeholder="GIG" maxlength="3" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="col"><label>Data de saída</label><input type="date" id="f-saida"></div>
+      <div class="col"><label>Data de retorno</label><input type="date" id="f-ret"></div>
+      <div class="col"><label>Check-in abre em</label><input type="date" id="f-checkin"></div>
+      <div class="col" style="min-width:80px;max-width:100px"><label>Pax</label><input type="number" id="f-pax" value="1" min="1"></div>
+    </div>
+  </div>
+  <div class="raised">
+    <div class="sec-title"><i class="ti ti-cash"></i> Financeiro</div>
+    <div class="row">
+      <div class="col"><label>Custo agência (R$)</label><input type="number" id="f-custo" placeholder="0" oninput="calcLucro()"></div>
+      <div class="col"><label>Valor cobrado (R$)</label><input type="number" id="f-venda" placeholder="0" oninput="calcLucro()"></div>
+      <div class="col"><label>Imposto (R$)</label><input type="number" id="f-imposto" placeholder="0" oninput="calcLucro()"></div>
+      <div class="col"><label>Lucro líquido (R$)</label><input type="number" id="f-lucro" readonly></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Forma de pagamento</label>
+        <select id="f-pgto" onchange="toggleFiado()"><option>Cartão de crédito</option><option>PIX</option><option>Transferência</option><option>Fiado</option><option>Parcelado</option></select>
+      </div>
+      <div class="col" id="col-fiado" style="display:none"><label>Data cobrança</label><input type="date" id="f-datacobranca"></div>
+      <div class="col"><label>Nota fiscal</label><select id="f-nf"><option>Pendente</option><option>Emitida</option></select></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Observações do cliente</label><textarea id="f-obs" placeholder="Preferências, pedidos especiais..."></textarea></div>
+      <div class="col"><label>Destinos futuros desejados</label><input id="f-futuros" placeholder="Ex: Europa, Dubai, Patagônia..."></div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:8px">
+    <button class="btn btn-primary" onclick="salvarEmissao()"><i class="ti ti-check"></i> Salvar emissão</button>
+    <button class="btn" onclick="goScreen('emissoes')">Cancelar</button>
+  </div>
+</div>
+
+<!-- ===== EMISSÕES ===== -->
+<div class="screen" id="s-emissoes">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+    <div class="sec-title" style="margin-bottom:0"><i class="ti ti-ticket"></i> Emissões</div>
+    <button class="btn btn-primary btn-sm" onclick="goScreen('nova')"><i class="ti ti-plus"></i> Nova</button>
+  </div>
+  <div class="row" style="margin-bottom:12px">
+    <input placeholder="Buscar cliente, destino, localizador..." style="max-width:320px" oninput="filtrarEmissoes(this.value)">
+    <select style="max-width:160px" onchange="filtrarStatus(this.value)">
+      <option value="">Todos os status</option>
+      <option>Ativo</option><option>Em viagem</option><option>Encerrado</option>
+    </select>
+  </div>
+  <div class="raised" style="padding:0;overflow:hidden">
+    <table><thead><tr>
+      <th>Cliente</th><th>Rota</th><th>Saída</th><th>Tipo</th><th>Custo</th><th>Lucro</th><th>Status</th><th></th>
+    </tr></thead>
+    <tbody id="tb-emissoes"></tbody></table>
+  </div>
+</div>
+
+<!-- ===== COTADOR ===== -->
+<div class="screen" id="s-cotador">
+  <div class="raised">
+    <div class="sec-title"><i class="ti ti-search"></i> Busca de passagens</div>
+    <div class="row">
+      <div class="col"><label>Origem</label><input id="c-orig" placeholder="GRU" maxlength="3" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="col"><label>Destino</label><input id="c-dest" placeholder="GIG" maxlength="3" oninput="this.value=this.value.toUpperCase()"></div>
+      <div class="col"><label>Ida</label><input type="date" id="c-ida"></div>
+      <div class="col"><label>Volta</label><input type="date" id="c-volta"></div>
+      <div class="col" style="min-width:80px;max-width:100px"><label>Adultos</label><input type="number" id="c-pax" value="1" min="1" max="9"></div>
+    </div>
+    <div class="row" style="margin-top:4px">
+      <div class="col"><label>Classe</label>
+        <select id="c-classe"><option value="economy">Econômica</option><option value="premium-economy">Econômica Premium</option><option value="business">Executiva</option><option value="first">Primeira</option></select>
+      </div>
+      <div class="col"><label>Tipo</label>
+        <select id="c-trip"><option value="RT">Ida e volta</option><option value="OW">Somente ida</option></select>
+      </div>
+    </div>
+  </div>
+  <div class="raised">
+    <p style="font-size:13px;font-weight:600;margin-bottom:10px">Plataformas</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+      <button class="btn btn-sm" onclick="selAll()">Todas</button>
+      <button class="btn btn-sm" onclick="selNone()">Limpar</button>
+      <button class="btn btn-sm" onclick="selGrp('milhas')">Só milhas</button>
+      <button class="btn btn-sm" onclick="selGrp('cons')">Só consolidadoras</button>
+    </div>
+    <div class="plat-grid" id="c-plat-grid"></div>
+  </div>
+  <div style="margin-bottom:14px">
+    <button class="btn btn-primary" onclick="gerarLinks()" style="padding:10px 28px"><i class="ti ti-search"></i> Gerar links</button>
+  </div>
+  <div id="c-result" style="display:none">
+    <div class="raised">
+      <p style="font-size:13px;font-weight:600;margin-bottom:4px">Abrir plataformas</p>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Clique individualmente ou abra todas de uma vez</p>
+      <div id="c-link-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:8px"></div>
+      <button class="open-all-btn" onclick="openAll()"><i class="ti ti-external-link"></i> Abrir todas de uma vez</button>
+    </div>
+    <div class="raised">
+      <p style="font-size:13px;font-weight:600;margin-bottom:2px"><i class="ti ti-calculator"></i> Calculadora de margem — award</p>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Use dados do seats.aero para calcular se vale a pena</p>
+      <div style="border:1.5px solid var(--purple);border-radius:var(--radius-lg);padding:12px;background:var(--purple-bg);margin-bottom:12px;display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;border-radius:var(--radius);background:var(--purple);display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="ti ti-award" style="color:#fff;font-size:18px"></i></div>
+        <div style="flex:1"><p style="font-size:13px;font-weight:600;color:var(--purple-text)">seats.aero</p><p style="font-size:11px;color:var(--purple)">Busque a disponibilidade award e preencha abaixo</p></div>
+        <button class="btn btn-sm" style="border-color:var(--purple);color:var(--purple-text)" onclick="abrirSeats()"><i class="ti ti-external-link"></i> Abrir</button>
+      </div>
+      <div class="row">
+        <div class="col"><label>Milhas necessárias</label><input type="number" id="m-milhas" placeholder="80000" oninput="calcMargem()"></div>
+        <div class="col"><label>Custo das milhas (R$)</label><input type="number" id="m-custo-milhas" placeholder="800" oninput="calcMargem()"></div>
+        <div class="col"><label>Taxas de emissão (R$)</label><input type="number" id="m-taxas" placeholder="180" oninput="calcMargem()"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Preço ancoragem cia (R$)</label><input type="number" id="m-ancora" placeholder="2400" oninput="calcMargem()"><p style="font-size:11px;color:var(--text2);margin-top:3px">⚠️ Confirme no site da companhia — Google Flights pode estar desatualizado</p></div>
+        <div class="col"><label>Valor para o cliente (R$)</label><input type="number" id="m-venda" placeholder="1800" oninput="calcMargem()"></div>
+        <div class="col"><label>Imposto agência (R$)</label><input type="number" id="m-imposto" placeholder="150" oninput="calcMargem()"></div>
+      </div>
+      <div id="m-result" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== UPSELL ===== -->
+<div class="screen" id="s-upsell">
+  <div class="step on" id="up-step0">
+    <div class="raised">
+      <div class="sec-title"><i class="ti ti-map-pin"></i> Dados da viagem</div>
+      <div class="row">
+        <div class="col"><label>Destino</label><input id="u-dest" placeholder="Ex: Lisboa, Dubai, Buenos Aires"></div>
+        <div class="col"><label>Chegada</label><input type="date" id="u-cheg"></div>
+        <div class="col"><label>Saída</label><input type="date" id="u-said"></div>
+        <div class="col" style="min-width:80px;max-width:100px"><label>Pessoas</label><input type="number" id="u-pax" value="2" min="1"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Perfil</label>
+          <select id="u-perfil"><option value="casal">Casal / lua de mel</option><option value="familia">Família com filhos</option><option value="grupo">Grupo de amigos</option><option value="solo">Viajante solo</option><option value="negocios">Negócios</option></select>
+        </div>
+        <div class="col"><label>Estilo</label>
+          <select id="u-estilo"><option value="aventura">Aventura / natureza</option><option value="cultural">Cultural / histórico</option><option value="gastronomia">Gastronomia / lazer</option><option value="praia">Praia / relaxamento</option><option value="compras">Compras / urbano</option></select>
+        </div>
+        <div class="col"><label>Orçamento hotel</label>
+          <select id="u-orcamento"><option value="economico">Econômico (até R$400)</option><option value="medio">Intermediário (R$400–900)</option><option value="premium">Premium (R$900–1.800)</option><option value="luxo">Luxo (acima de R$1.800)</option></select>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <button class="btn btn-primary" onclick="gerarUpsell()" style="padding:10px 24px"><i class="ti ti-sparkles"></i> Gerar upsell com IA</button>
+      </div>
+    </div>
+  </div>
+  <div class="step" id="up-step1">
+    <div class="raised loading-box"><span class="spinner"></span> Consultando destino e montando opções...</div>
+  </div>
+  <div class="step" id="up-step2">
+    <div class="raised" id="up-header"></div>
+    <div class="raised">
+      <div class="sec-title"><i class="ti ti-building"></i> Hotéis sugeridos <span class="badge b-blue" style="margin-left:4px">3 opções</span></div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:4px">Clique para selecionar</p>
+      <div class="hotel-grid" id="up-hoteis"></div>
+    </div>
+    <div class="raised">
+      <div class="sec-title"><i class="ti ti-plus"></i> Serviços adicionais</div>
+      <div class="extra-grid" id="up-extras"></div>
+    </div>
+    <div class="raised">
+      <div class="sec-title"><i class="ti ti-route"></i> Roteiro sugerido</div>
+      <div id="up-roteiro"></div>
+    </div>
+    <div class="raised">
+      <div class="sec-title"><i class="ti ti-receipt"></i> Resumo do upsell</div>
+      <div id="up-resumo"></div>
+      <button class="wa-btn-big" onclick="copiarProposta()"><i class="ti ti-brand-whatsapp"></i> Copiar proposta para WhatsApp</button>
+    </div>
+    <button class="btn" style="margin-top:4px" onclick="resetUpsell()"><i class="ti ti-refresh"></i> Nova consulta</button>
+  </div>
+</div>
+
+<!-- ===== CLIENTES ===== -->
+<div class="screen" id="s-clientes">
+  <div class="sec-title"><i class="ti ti-users"></i> Base de clientes</div>
+  <input placeholder="Buscar cliente..." style="max-width:300px;margin-bottom:14px" oninput="filtrarClientes(this.value)">
+  <div id="lista-clientes"></div>
+</div>
+
+<!-- ===== NOTIFICAÇÕES ===== -->
+<div class="screen" id="s-notif">
+  <div class="sec-title"><i class="ti ti-bell"></i> Central de notificações</div>
+  <div class="tabs">
+    <button class="tab-btn on" onclick="filtNotif('todas',this)">Todas</button>
+    <button class="tab-btn" onclick="filtNotif('checkin',this)">Check-in</button>
+    <button class="tab-btn" onclick="filtNotif('cobranca',this)">Cobrança</button>
+    <button class="tab-btn" onclick="filtNotif('posviagem',this)">Pós-viagem</button>
+    <button class="tab-btn" onclick="filtNotif('marketing',this)">Marketing</button>
+  </div>
+  <div id="lista-notif"></div>
+</div>
+
+<!-- ===== FINANCEIRO ===== -->
+<div class="screen" id="s-financeiro">
+  <div class="sec-title"><i class="ti ti-cash"></i> Balanço financeiro</div>
+  <div class="metric-grid" id="fin-metrics"></div>
+  <div class="row">
+    <div class="col raised">
+      <div class="sec-title" style="font-size:14px">Contas a pagar</div>
+      <table><thead><tr><th>Fornecedor</th><th>Valor</th><th>Venc.</th><th>Status</th></tr></thead>
+      <tbody id="fin-pagar"></tbody></table>
+    </div>
+    <div class="col raised">
+      <div class="sec-title" style="font-size:14px">Contas a receber</div>
+      <table><thead><tr><th>Cliente</th><th>Valor</th><th>Venc.</th><th>NF</th></tr></thead>
+      <tbody id="fin-receber"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<!-- ===== FORNECEDORES ===== -->
+<div class="screen" id="s-fornecedores">
+  <div class="sec-title"><i class="ti ti-building"></i> Fornecedores</div>
+  <div class="raised" id="lista-fornecedores"></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ============ STORAGE ============
+const SK_EM='ag_emissoes';
+const SK_CL='ag_clientes';
+
+function loadEM(){try{const v=localStorage.getItem(SK_EM);return v?JSON.parse(v):[];}catch(e){return [];}}
+function saveEM(d){localStorage.setItem(SK_EM,JSON.stringify(d));}
+function loadCL(){try{const v=localStorage.getItem(SK_CL);return v?JSON.parse(v):[];}catch(e){return [];}}
+function saveCL(d){localStorage.setItem(SK_CL,JSON.stringify(d));}
+
+// ============ NAV ============
+function goScreen(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('on');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  else{const b=document.querySelector(`.nav-btn[onclick*="'${id}'"]`);if(b)b.classList.add('active');}
+  const renders={dash:renderDash,emissoes:renderEmissoes,clientes:renderClientes,notif:()=>renderNotif('todas'),financeiro:renderFinanceiro,fornecedores:renderFornecedores,cotador:renderCotador};
+  if(renders[id])renders[id]();
+}
+
+// ============ DASHBOARD ============
+function renderDash(){
+  const ems=loadEM();
+  const now=new Date();
+  const mes=ems.filter(e=>{if(!e.criado)return false;const d=new Date(e.criado);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const receita=mes.reduce((s,e)=>s+(parseFloat(e.venda)||0),0);
+  const lucro=mes.reduce((s,e)=>s+(parseFloat(e.lucro)||0),0);
+  const impostos=mes.reduce((s,e)=>s+(parseFloat(e.imposto)||0),0);
+  const receber=ems.filter(e=>e.pgto==='Fiado').reduce((s,e)=>s+(parseFloat(e.venda)||0),0);
+  const nfPend=ems.filter(e=>e.nf==='Pendente').length;
+  document.getElementById('d-total').textContent=mes.length;
+  document.getElementById('d-receita').textContent='R$'+receita.toLocaleString('pt-BR');
+  document.getElementById('d-lucro').textContent='R$'+lucro.toLocaleString('pt-BR');
+  document.getElementById('d-impostos').textContent='R$'+impostos.toLocaleString('pt-BR');
+  document.getElementById('d-receber').textContent='R$'+receber.toLocaleString('pt-BR');
+  document.getElementById('d-nf').textContent=nfPend;
+  // urgentes
+  const urg=[];
+  ems.forEach(e=>{
+    if(e.checkin){
+      const dias=Math.round((new Date(e.checkin)-now)/(1000*60*60*24));
+      if(dias>=0&&dias<=2)urg.push(`<div class="notif warn"><div class="nt">Check-in ${dias===0?'hoje':dias===1?'amanhã':'em 2 dias'}</div>${e.nome} · ${e.cia||''} · ${e.orig||'?'}→${e.dest||'?'}</div>`);
+    }
+    if(e.pgto==='Fiado'&&e.datacobranca){
+      const dias=Math.round((new Date(e.datacobranca)-now)/(1000*60*60*24));
+      if(dias<=0)urg.push(`<div class="notif danger"><div class="nt">Cobrança vencida</div>${e.nome} · R$${parseFloat(e.venda||0).toLocaleString('pt-BR')}</div>`);
+      else if(dias<=3)urg.push(`<div class="notif warn"><div class="nt">Cobrança em ${dias} dias</div>${e.nome} · R$${parseFloat(e.venda||0).toLocaleString('pt-BR')}</div>`);
+    }
+  });
+  document.getElementById('d-urgentes').innerHTML=urg.length?urg.join(''):'<p style="color:var(--text2);font-size:13px">Nenhuma ação urgente.</p>';
+  // mix
+  const tipos={};
+  ems.forEach(e=>{const t=e.tipo||'Outros';tipos[t]=(tipos[t]||0)+1;});
+  const total=ems.length||1;
+  const colors=['#378ADD','#639922','#EF9F27','#E24B4A','#534AB7','#1D9E75'];
+  const mixHtml=Object.entries(tipos).map(([t,n],i)=>`
+    <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span>${t}</span><span style="font-weight:600">${Math.round(n/total*100)}%</span></div>
+    <div class="progress"><div class="progress-bar" style="width:${Math.round(n/total*100)}%;background:${colors[i%colors.length]}"></div></div>
+    <div style="margin-bottom:8px"></div>`).join('');
+  document.getElementById('d-mix').innerHTML=mixHtml||'<p style="color:var(--text2);font-size:13px">Nenhuma emissão ainda.</p>';
+}
+
+// ============ NOVA EMISSÃO ============
+function calcLucro(){
+  const v=parseFloat(document.getElementById('f-venda').value)||0;
+  const c=parseFloat(document.getElementById('f-custo').value)||0;
+  const i=parseFloat(document.getElementById('f-imposto').value)||0;
+  document.getElementById('f-lucro').value=(v-c-i).toFixed(2);
+}
+function toggleFiado(){
+  document.getElementById('col-fiado').style.display=document.getElementById('f-pgto').value==='Fiado'?'block':'none';
+}
+function salvarEmissao(){
+  const nome=document.getElementById('f-nome').value.trim();
+  const pnr=document.getElementById('f-pnr').value.trim();
+  if(!nome||!pnr){alert('Preencha nome e localizador.');return;}
+  const em={
+    id:Date.now(),nome,cpf:document.getElementById('f-cpf').value,
+    tel:document.getElementById('f-tel').value,email:document.getElementById('f-email').value,
+    agente:document.getElementById('f-agente').value,pnr,
+    cia:document.getElementById('f-cia').value,tipo:document.getElementById('f-tipo').value,
+    orig:document.getElementById('f-orig').value,dest:document.getElementById('f-dest').value,
+    saida:document.getElementById('f-saida').value,ret:document.getElementById('f-ret').value,
+    checkin:document.getElementById('f-checkin').value,pax:document.getElementById('f-pax').value,
+    custo:document.getElementById('f-custo').value,venda:document.getElementById('f-venda').value,
+    imposto:document.getElementById('f-imposto').value,lucro:document.getElementById('f-lucro').value,
+    pgto:document.getElementById('f-pgto').value,datacobranca:document.getElementById('f-datacobranca').value,
+    nf:document.getElementById('f-nf').value,obs:document.getElementById('f-obs').value,
+    futuros:document.getElementById('f-futuros').value,status:'Ativo',criado:new Date().toISOString()
+  };
+  const list=loadEM();list.unshift(em);saveEM(list);
+  upsertCliente(em);
+  ['f-nome','f-cpf','f-tel','f-email','f-agente','f-pnr','f-orig','f-dest','f-custo','f-venda','f-imposto','f-lucro','f-obs','f-futuros'].forEach(id=>{document.getElementById(id).value='';});
+  alert('Emissão salva!');
+  goScreen('emissoes');
+}
+function upsertCliente(em){
+  let cls=loadCL();
+  const idx=cls.findIndex(c=>c.nome===em.nome);
+  if(idx>=0){cls[idx].viagens=(cls[idx].viagens||0)+1;cls[idx].futuros=em.futuros||cls[idx].futuros;cls[idx].tel=em.tel||cls[idx].tel;}
+  else cls.push({nome:em.nome,tel:em.tel,email:em.email,viagens:1,futuros:em.futuros,desde:new Date().toISOString()});
+  saveCL(cls);
+}
+
+// ============ EMISSÕES ============
+let emFiltro='';let emStatus='';
+function renderEmissoes(){
+  let list=loadEM();
+  if(emFiltro)list=list.filter(e=>(e.nome+e.dest+e.pnr+e.orig).toLowerCase().includes(emFiltro.toLowerCase()));
+  if(emStatus)list=list.filter(e=>e.status===emStatus);
+  const tb=document.getElementById('tb-emissoes');
+  if(!list.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px">Nenhuma emissão encontrada</td></tr>';return;}
+  tb.innerHTML=list.map(e=>`<tr>
+    <td><strong>${e.nome}</strong><br><span style="font-size:11px;color:var(--text2)">${e.pnr||'—'}</span></td>
+    <td>${e.orig||'?'}→${e.dest||'?'}</td>
+    <td>${e.saida?e.saida.split('-').reverse().join('/'):'—'}</td>
+    <td>${tipoBadge(e.tipo)}</td>
+    <td>R$${parseFloat(e.custo||0).toLocaleString('pt-BR')}</td>
+    <td style="color:var(--green);font-weight:600">R$${parseFloat(e.lucro||0).toLocaleString('pt-BR')}</td>
+    <td>${statusBadge(e.status)}</td>
+    <td><button class="btn btn-sm" onclick="excluirEmissao(${e.id})" title="Excluir"><i class="ti ti-trash"></i></button></td>
+  </tr>`).join('');
+}
+function filtrarEmissoes(v){emFiltro=v;renderEmissoes();}
+function filtrarStatus(v){emStatus=v;renderEmissoes();}
+function excluirEmissao(id){if(!confirm('Excluir esta emissão?'))return;saveEM(loadEM().filter(e=>e.id!==id));renderEmissoes();}
+function statusBadge(s){const m={Ativo:'b-blue',Encerrado:'b-green','Em viagem':'b-amber'};return`<span class="badge ${m[s]||'b-gray'}">${s||'Ativo'}</span>`;}
+function tipoBadge(t){if(t&&t.includes('Milhas'))return`<span class="badge b-amber">${t}</span>`;return`<span class="badge b-blue">${t||'—'}</span>`;}
+
+// ============ COTADOR ============
+const PLATS=[
+  {id:'latam',nome:'LATAM Milhas',tipo:'milhas',dot:'#EF9F27',url:(o,d,i,v,p,cl,tr)=>`https://www.latamairlines.com/br/pt/oferta-voos?origin=${o}&destination=${d}&outbound=${i}&adults=${p}&cabin=${cl==='economy'?'Y':'C'}&tripType=${tr}${v?'&inbound='+v:''}`},
+  {id:'azul',nome:'Azul Tudo Azul',tipo:'milhas',dot:'#EF9F27',url:(o,d,i,v,p)=>`https://www.voeazul.com.br/br/pt/home/selecao-voo?market0OriginStation=${o}&market0DestinationStation=${d}&market0DepartureDate=${i}${v?'&market1DepartureDate='+v:''}&ADT=${p}`},
+  {id:'gol',nome:'GOL Smiles',tipo:'milhas',dot:'#EF9F27',url:(o,d,i,v,p,cl,tr)=>`https://www.voegol.com.br/pt/busca?Origin=${o}&Destination=${d}&DepartureDate=${i}${v?'&ReturnDate='+v:''}&Adults=${p}&Type=${tr}`},
+  {id:'patria',nome:'Pátria Consolidadora',tipo:'cons',dot:'#378ADD',url:(o,d,i,v,p,cl)=>`https://patria.consolidadora.com.br/passagens?origem=${o}&destino=${d}&data=${i}${v?'&dataVolta='+v:''}&adultos=${p}&classe=${cl}`},
+  {id:'cativa',nome:'Cativa Operadora',tipo:'cons',dot:'#378ADD',url:(o,d,i,v,p)=>`https://cativa.com.br/busca?from=${o}&to=${d}&departure=${i}${v?'&return='+v:''}&passengers=${p}`},
+  {id:'amadeus',nome:'GDS Amadeus',tipo:'cons',dot:'#378ADD',url:(o,d,i,v,p,cl)=>`https://www.amadeus.com/pt-br/industries/airlines/airline-booking?origin=${o}&destination=${d}&departDate=${i}${v?'&returnDate='+v:''}&adults=${p}&cabin=${cl}`},
+  {id:'google',nome:'Google Flights',tipo:'comp',dot:'#639922',url:(o,d,i)=>`https://www.google.com/travel/flights?hl=pt-BR&q=voos+${o}+para+${d}+${i}`},
+];
+const cSel=new Set(['latam','azul','gol','patria','cativa','amadeus']);
+let cLinks=[];let buscaAtual={};
+function renderCotador(){
+  document.getElementById('c-plat-grid').innerHTML=PLATS.map(p=>`
+    <div class="plat-card ${cSel.has(p.id)?'sel':''}" id="pc-${p.id}" onclick="togglePlat('${p.id}')">
+      <div class="dot" style="background:${p.dot}"></div>
+      <div>
+        <div style="font-size:13px;font-weight:500">${p.nome}</div>
+        <div style="font-size:11px;color:var(--text2)">${p.tipo==='milhas'?'Milhas':p.tipo==='cons'?'Consolidadora':'Comparador'}</div>
+      </div>
+    </div>`).join('');
+}
+function togglePlat(id){cSel.has(id)?cSel.delete(id):cSel.add(id);document.getElementById('pc-'+id).classList.toggle('sel');}
+function selAll(){PLATS.forEach(p=>{cSel.add(p.id);const el=document.getElementById('pc-'+p.id);if(el)el.classList.add('sel');});}
+function selNone(){cSel.clear();document.querySelectorAll('.plat-card').forEach(c=>c.classList.remove('sel'));}
+function selGrp(t){cSel.clear();document.querySelectorAll('.plat-card').forEach(c=>c.classList.remove('sel'));PLATS.filter(p=>p.tipo===t).forEach(p=>{cSel.add(p.id);const el=document.getElementById('pc-'+p.id);if(el)el.classList.add('sel');});}
+function gerarLinks(){
+  const o=document.getElementById('c-orig').value.trim();
+  const d=document.getElementById('c-dest').value.trim();
+  const i=document.getElementById('c-ida').value;
+  if(!o||!d||!i){alert('Preencha origem, destino e data de ida.');return;}
+  const v=document.getElementById('c-volta').value;
+  const p=document.getElementById('c-pax').value||1;
+  const cl=document.getElementById('c-classe').value;
+  const tr=document.getElementById('c-trip').value;
+  buscaAtual={o,d,i,v,p,cl,tr};
+  cLinks=PLATS.filter(p=>cSel.has(p.id)).map(pl=>({...pl,link:pl.url(o,d,i,v,p,cl,tr)}));
+  document.getElementById('c-link-grid').innerHTML=cLinks.map(l=>`
+    <button onclick="window.open('${l.link}','_blank')" style="padding:11px 13px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);cursor:pointer;text-align:left;display:flex;align-items:center;gap:10px;font-family:inherit;font-size:13px;transition:all .15s" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='var(--bg)'">
+      <div class="dot" style="background:${l.dot};width:12px;height:12px;flex-shrink:0"></div>
+      <div style="flex:1"><div style="font-weight:600">${l.nome}</div><div style="font-size:11px;color:var(--text2)">${l.tipo==='milhas'?'Milhas':'Consolidadora/GDS'}</div></div>
+      <i class="ti ti-external-link" style="color:var(--text2);font-size:14px"></i>
+    </button>`).join('');
+  document.getElementById('c-result').style.display='block';
+  document.getElementById('c-result').scrollIntoView({behavior:'smooth'});
+}
+function openAll(){cLinks.forEach((l,i)=>setTimeout(()=>window.open(l.link,'_blank'),i*300));}
+function abrirSeats(){window.open(`https://seats.aero/search?origin=${buscaAtual.o||''}&destination=${buscaAtual.d||''}&cabin=${buscaAtual.cl||'economy'}`,'_blank');}
+function calcMargem(){
+  const cm=parseFloat(document.getElementById('m-custo-milhas').value)||0;
+  const tx=parseFloat(document.getElementById('m-taxas').value)||0;
+  const anc=parseFloat(document.getElementById('m-ancora').value)||0;
+  const vnd=parseFloat(document.getElementById('m-venda').value)||0;
+  const imp=parseFloat(document.getElementById('m-imposto').value)||0;
+  if(!cm&&!tx&&!vnd)return;
+  const custo=cm+tx;
+  const lbrt=vnd-custo;
+  const lliq=lbrt-imp;
+  const marg=vnd>0?(lliq/vnd*100):0;
+  const desc=anc>0?((anc-vnd)/anc*100):0;
+  const minimo=Math.ceil(custo*1.12+imp);
+  let cls,status,conselho;
+  if(lliq<=0){cls='ruim';status='⚠️ Prejuízo — não feche assim';conselho=`Custo total R$${custo.toLocaleString('pt-BR')} + R$${imp} imposto. Mínimo para não perder: R$${Math.ceil(custo+imp).toLocaleString('pt-BR')}.`;}
+  else if(marg<10){cls='ok';status='⚡ Margem apertada — atenção';conselho=`${marg.toFixed(1)}% de margem. Só feche se for cliente fidelizado. Mínimo com 12% de margem: R$${minimo.toLocaleString('pt-BR')}.`;}
+  else if(marg<20){cls='ok';status='✅ Margem razoável — pode fechar';conselho=`${marg.toFixed(1)}% de margem. ${anc>0?`Cliente economiza ${desc.toFixed(0)}% vs preço da cia (R$${anc.toLocaleString('pt-BR')}).`:''}`;}
+  else{cls='boa';status='🚀 Margem excelente — feche logo';conselho=`${marg.toFixed(1)}% de margem líquida. ${anc>0?`${desc.toFixed(0)}% abaixo da cia — ótimo argumento de venda.`:''}`;}
+  const el=document.getElementById('m-result');
+  el.style.display='block';
+  el.innerHTML=`<div class="margem-box ${cls}">
+    <p style="font-size:14px;font-weight:600;margin-bottom:8px">${status}</p>
+    <div class="m-grid">
+      <div class="m-card"><div class="m-label">Custo total</div><div class="m-val">R$${custo.toLocaleString('pt-BR')}</div></div>
+      <div class="m-card"><div class="m-label">Lucro bruto</div><div class="m-val">R$${lbrt.toLocaleString('pt-BR')}</div></div>
+      <div class="m-card"><div class="m-label">Lucro líquido</div><div class="m-val">R$${lliq.toLocaleString('pt-BR')}</div></div>
+      <div class="m-card"><div class="m-label">Margem</div><div class="m-val">${marg.toFixed(1)}%</div></div>
+      ${anc>0?`<div class="m-card"><div class="m-label">Desconto vs cia</div><div class="m-val">${desc.toFixed(0)}%</div></div>`:''}
+      <div class="m-card"><div class="m-label">Preço mín. (12%)</div><div class="m-val">R$${minimo.toLocaleString('pt-BR')}</div></div>
+    </div>
+    <p style="font-size:12px;margin-top:12px;padding-top:10px;border-top:0.5px solid rgba(0,0,0,.1)">${conselho}</p>
+  </div>`;
+}
+
+// ============ UPSELL ============
+let uHotelSel=null;const uExtrasSel=new Set();const uExtrasData={};let uResultData={};let uDados={};
+function showUpStep(id){document.querySelectorAll('#s-upsell .step').forEach(s=>s.classList.remove('on'));document.getElementById(id).classList.add('on');}
+async function gerarUpsell(){
+  const dest=document.getElementById('u-dest').value.trim();
+  if(!dest){alert('Informe o destino.');return;}
+  const cheg=document.getElementById('u-cheg').value;
+  const said=document.getElementById('u-said').value;
+  const noites=cheg&&said?Math.max(1,Math.round((new Date(said)-new Date(cheg))/(864e5))):5;
+  uDados={dest,cheg,said,pax:parseInt(document.getElementById('u-pax').value)||2,perfil:document.getElementById('u-perfil').value,estilo:document.getElementById('u-estilo').value,orcamento:document.getElementById('u-orcamento').value,noites};
+  showUpStep('up-step1');
+  const prompt=`Especialista em turismo. Viagem para ${dest}, ${noites} noites, ${uDados.pax} pessoa(s), perfil: ${uDados.perfil}, estilo: ${uDados.estilo}, orçamento hotel: ${uDados.orcamento}.
+Responda APENAS JSON válido sem markdown:
+{"resumo_destino":"frase sedutora max 15 palavras","hoteis":[{"nome":"hotel real","categoria":"intermediário","estrelas":4,"bairro":"bairro","diaria_brl":500,"diferencial":"frase curta","emoji":"🏨"},{"nome":"...","categoria":"...","estrelas":5,"bairro":"...","diaria_brl":900,"diferencial":"...","emoji":"🏨"},{"nome":"...","categoria":"...","estrelas":3,"bairro":"...","diaria_brl":300,"diferencial":"...","emoji":"🏨"}],"seguro":{"preco_pessoa_brl":120,"cobertura":"cobertura completa"},"carro":{"preco_dia_brl":180,"tipo":"SUV compacto"},"passeios":[{"nome":"passeio 1","preco_pessoa_brl":80,"duracao":"meio dia"},{"nome":"passeio 2","preco_pessoa_brl":120,"duracao":"dia inteiro"},{"nome":"passeio 3","preco_pessoa_brl":60,"duracao":"noturno"}],"roteiro":[{"dia":1,"titulo":"título","atividades":["atividade 1","atividade 2","atividade 3"]},{"dia":2,"titulo":"...","atividades":["...","...","..."]},{"dia":3,"titulo":"...","atividades":["...","...","..."]}]}`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await r.json();
+    const txt=data.content.filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    uResultData=JSON.parse(txt);
+    renderUpsell();
+    showUpStep('up-step2');
+  }catch(e){alert('Erro ao gerar. Tente novamente.');showUpStep('up-step0');}
+}
+function renderUpsell(){
+  uHotelSel=null;uExtrasSel.clear();
+  document.getElementById('up-header').innerHTML=`<div style="display:flex;align-items:center;gap:12px"><div style="width:44px;height:44px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center"><i class="ti ti-map-pin" style="color:var(--blue);font-size:20px"></i></div><div><p style="font-size:16px;font-weight:600">${uDados.dest}</p><p style="font-size:12px;color:var(--text2)">${uResultData.resumo_destino||''}</p></div><div style="margin-left:auto"><span class="badge b-blue">${uDados.noites} noites</span> <span class="badge b-gray">${uDados.pax} pax</span></div></div>`;
+  const hs=uResultData.hoteis||[];
+  document.getElementById('up-hoteis').innerHTML=hs.map((h,i)=>`<div class="hotel-card ${i===0?'sel':''}" id="hc-${i}" onclick="selHotel(${i})"><div class="hotel-img">${h.emoji||'🏨'}</div><div class="hotel-body">${i===0?'<span class="badge b-blue" style="margin-bottom:6px;display:inline-block">Recomendado</span>':''}<div class="stars">${'★'.repeat(h.estrelas||3)}${'☆'.repeat(5-(h.estrelas||3))}</div><div class="hotel-name">${h.nome}</div><div class="hotel-loc"><i class="ti ti-map-pin" style="font-size:11px"></i> ${h.bairro}</div><div style="font-size:11px;color:var(--text2);margin-bottom:6px">${h.diferencial}</div><div class="hotel-price">R$${(h.diaria_brl||0).toLocaleString('pt-BR')} <span>/ noite</span></div><div style="font-size:11px;color:var(--text2)">Total: R$${((h.diaria_brl||0)*uDados.noites).toLocaleString('pt-BR')}</div></div></div>`).join('');
+  if(hs.length){uHotelSel=0;}
+  const pax=uDados.pax;
+  const seg=uResultData.seguro||{};const carr=uResultData.carro||{};const pass=uResultData.passeios||[];
+  const extras=[
+    {id:'seguro',icon:'ti-shield-check',nome:'Seguro viagem',desc:seg.cobertura||'',preco:(seg.preco_pessoa_brl||0)*pax,unit:`R$${seg.preco_pessoa_brl||0}/pax`},
+    {id:'carro',icon:'ti-car',nome:'Aluguel de carro',desc:carr.tipo||'',preco:(carr.preco_dia_brl||0)*uDados.noites,unit:`R$${carr.preco_dia_brl||0}/dia`},
+    ...pass.map((p,i)=>({id:'p'+i,icon:'ti-ticket',nome:p.nome,desc:p.duracao||'',preco:(p.preco_pessoa_brl||0)*pax,unit:`R$${p.preco_pessoa_brl||0}/pax`}))
+  ];
+  extras.forEach(e=>uExtrasData[e.id]=e);
+  document.getElementById('up-extras').innerHTML=extras.map(e=>`<div class="extra-card" id="ec-${e.id}" onclick="toggleExtra('${e.id}')"><i class="ti ${e.icon}" style="font-size:22px;color:var(--text2);margin-bottom:8px"></i><div style="font-size:13px;font-weight:600;margin-bottom:2px">${e.nome}</div><div style="font-size:11px;color:var(--text2)">${e.desc}</div><div style="font-size:13px;color:var(--blue);font-weight:600;margin-top:4px">R$${(e.preco||0).toLocaleString('pt-BR')} total</div><div style="font-size:11px;color:var(--text2)">${e.unit}</div></div>`).join('');
+  const rot=uResultData.roteiro||[];
+  document.getElementById('up-roteiro').innerHTML=rot.map((d,i)=>`<div class="rot-dia ${i===0?'ativo':''}"><div class="rot-num">Dia ${d.dia}</div><div class="rot-titulo">${d.titulo}</div>${(d.atividades||[]).map(a=>`<div class="rot-item"><i class="ti ti-circle-dot" style="font-size:12px;margin-top:2px;flex-shrink:0"></i>${a}</div>`).join('')}</div>`).join('');
+  atualizarResumoUp();
+}
+function selHotel(i){
+  document.querySelectorAll('.hotel-card').forEach(c=>{c.classList.remove('sel');c.style.border='';});
+  document.getElementById('hc-'+i).classList.add('sel');
+  uHotelSel=i;atualizarResumoUp();
+}
+function toggleExtra(id){
+  if(uExtrasSel.has(id)){uExtrasSel.delete(id);document.getElementById('ec-'+id).classList.remove('sel');}
+  else{uExtrasSel.add(id);document.getElementById('ec-'+id).classList.add('sel');}
+  atualizarResumoUp();
+}
+function atualizarResumoUp(){
+  const hs=uResultData.hoteis||[];let linhas=[];let total=0;
+  if(uHotelSel!==null&&hs[uHotelSel]){const h=hs[uHotelSel];const st=(h.diaria_brl||0)*uDados.noites;total+=st;linhas.push({l:`Hotel: ${h.nome} (${uDados.noites}n)`,v:st});}
+  uExtrasSel.forEach(id=>{const e=uExtrasData[id];if(e){total+=e.preco||0;linhas.push({l:e.nome,v:e.preco||0});}});
+  linhas.push({l:'Total estimado',v:total,tot:true});
+  document.getElementById('up-resumo').innerHTML=linhas.map(l=>`<div class="resumo-linha"><span>${l.l}</span><span ${l.tot?'style="color:var(--blue)"':''}> R$${(l.v||0).toLocaleString('pt-BR')}</span></div>`).join('');
+}
+function copiarProposta(){
+  const hs=uResultData.hoteis||[];
+  let txt=`✈️ *Proposta de viagem — ${uDados.dest}*\n${uDados.noites} noites · ${uDados.pax} pessoa(s)\n\n`;
+  if(uHotelSel!==null&&hs[uHotelSel]){const h=hs[uHotelSel];txt+=`🏨 *Hotel:* ${h.nome}\n📍 ${h.bairro} · ${h.estrelas}★\n💰 R$${(h.diaria_brl||0).toLocaleString('pt-BR')}/noite (total R$${((h.diaria_brl||0)*uDados.noites).toLocaleString('pt-BR')})\n\n`;}
+  if(uExtrasSel.size){txt+=`➕ *Serviços incluídos:*\n`;uExtrasSel.forEach(id=>{const e=uExtrasData[id];if(e)txt+=`• ${e.nome}: R$${(e.preco||0).toLocaleString('pt-BR')}\n`;});txt+='\n';}
+  const rot=uResultData.roteiro||[];
+  if(rot.length){txt+=`🗺️ *Roteiro resumido:*\n`;rot.forEach(d=>{txt+=`📅 Dia ${d.dia}: ${d.titulo}\n`;});txt+='\n';}
+  txt+=`💬 Posso detalhar qualquer item ou ajustar conforme seu perfil. Vamos fechar?`;
+  navigator.clipboard.writeText(txt).then(()=>alert('Proposta copiada! Cole no WhatsApp.')).catch(()=>{const ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);alert('Proposta copiada!');});
+}
+function resetUpsell(){showUpStep('up-step0');}
+
+// ============ CLIENTES ============
+function renderClientes(filtro){
+  let cls=loadCL();
+  if(filtro)cls=cls.filter(c=>c.nome.toLowerCase().includes(filtro.toLowerCase()));
+  const el=document.getElementById('lista-clientes');
+  if(!cls.length){el.innerHTML='<p style="color:var(--text2);font-size:13px">Nenhum cliente ainda.</p>';return;}
+  el.innerHTML=cls.map(c=>{const ini=c.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();return`<div class="raised" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px"><div class="avatar">${ini}</div><div style="flex:1"><p style="font-weight:600;font-size:14px">${c.nome}</p><p style="font-size:12px;color:var(--text2)">${c.email||'—'} · ${c.tel||'—'}</p><p style="font-size:12px;margin-top:4px"><span class="badge b-blue">${c.viagens} viagen${c.viagens!==1?'s':''}</span>${c.futuros?` <span class="badge b-green" style="margin-left:4px">Deseja: ${c.futuros}</span>`:''}</p></div>${c.tel?`<button class="wa-btn" onclick="window.open('https://wa.me/55'+('${c.tel}'.replace(/\D/g,'')))">WhatsApp</button>`:''}</div>`;}).join('');
+}
+function filtrarClientes(v){renderClientes(v);}
+
+// ============ NOTIFICAÇÕES ============
+function renderNotif(tipo){
+  const ems=loadEM();const now=new Date();const notifs=[];
+  ems.forEach(e=>{
+    if(e.checkin){const dias=Math.round((new Date(e.checkin)-now)/(864e5));if(dias>=0&&dias<=3)notifs.push({tipo:'checkin',prioridade:dias===0?'danger':'warn',titulo:`Check-in ${dias===0?'hoje':dias===1?'amanhã':`em ${dias} dias`}`,desc:`${e.nome} · ${e.cia||''} · ${e.orig||'?'}→${e.dest||'?'} · ${e.pnr||''}`,data:dias===0?'Hoje':e.checkin.split('-').reverse().join('/')});}
+    if(e.pgto==='Fiado'&&e.datacobranca){const dias=Math.round((new Date(e.datacobranca)-now)/(864e5));if(dias<=5)notifs.push({tipo:'cobranca',prioridade:dias<=0?'danger':'warn',titulo:dias<=0?'Cobrança em atraso':`Cobrança em ${dias} dias`,desc:`${e.nome} · R$${parseFloat(e.venda||0).toLocaleString('pt-BR')}`,data:e.datacobranca.split('-').reverse().join('/')});}
+    if(e.saida){const dias=Math.round((new Date(e.saida)-now)/(864e5));if(dias===-1||dias===-2)notifs.push({tipo:'posviagem',prioridade:'ok',titulo:'Solicitar avaliação',desc:`${e.nome} · voltou há ${Math.abs(dias)} dia(s)`,data:'Hoje'});}
+  });
+  if(!notifs.length&&tipo==='todas')notifs.push({tipo:'info',prioridade:'info',titulo:'Tudo em dia!',desc:'Nenhuma ação pendente no momento.',data:''});
+  const filtradas=tipo==='todas'?notifs:notifs.filter(n=>n.tipo===tipo);
+  document.getElementById('lista-notif').innerHTML=filtradas.length?filtradas.map(n=>`<div class="notif ${n.prioridade}"><div class="nt">${n.data?n.data+' · ':''}${n.tipo.toUpperCase()}</div><strong>${n.titulo}</strong> — ${n.desc}</div>`).join(''):'<p style="color:var(--text2);font-size:13px">Nenhuma notificação nesta categoria.</p>';
+}
+function filtNotif(f,btn){document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderNotif(f);}
+
+// ============ FINANCEIRO ============
+function renderFinanceiro(){
+  const ems=loadEM();
+  const now=new Date();
+  const mes=ems.filter(e=>{if(!e.criado)return true;const d=new Date(e.criado);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
+  const rec=mes.reduce((s,e)=>s+(parseFloat(e.venda)||0),0);
+  const cus=mes.reduce((s,e)=>s+(parseFloat(e.custo)||0),0);
+  const lbrt=rec-cus;
+  const imp=mes.reduce((s,e)=>s+(parseFloat(e.imposto)||0),0);
+  const lliq=lbrt-imp;
+  const marg=rec>0?Math.round(lliq/rec*100):0;
+  document.getElementById('fin-metrics').innerHTML=`
+    <div class="metric"><div class="lbl">Receita bruta</div><div class="val" style="color:var(--green)">R$${rec.toLocaleString('pt-BR')}</div></div>
+    <div class="metric"><div class="lbl">Custo emissões</div><div class="val" style="color:var(--red)">R$${cus.toLocaleString('pt-BR')}</div></div>
+    <div class="metric"><div class="lbl">Lucro bruto</div><div class="val" style="color:var(--green)">R$${lbrt.toLocaleString('pt-BR')}</div></div>
+    <div class="metric"><div class="lbl">Impostos</div><div class="val" style="color:var(--red)">R$${imp.toLocaleString('pt-BR')}</div></div>
+    <div class="metric"><div class="lbl">Lucro líquido</div><div class="val" style="color:var(--green)">R$${lliq.toLocaleString('pt-BR')}</div></div>
+    <div class="metric"><div class="lbl">Margem</div><div class="val" style="color:var(--blue)">${marg}%</div></div>`;
+  const fiados=ems.filter(e=>e.pgto==='Fiado');
+  document.getElementById('fin-receber').innerHTML=fiados.length?fiados.map(e=>`<tr><td>${e.nome}</td><td>R$${parseFloat(e.venda||0).toLocaleString('pt-BR')}</td><td>${e.datacobranca?e.datacobranca.split('-').reverse().join('/'):'—'}</td><td><span class="badge ${e.nf==='Emitida'?'b-green':'b-red'}">${e.nf||'Pendente'}</span></td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--text2);text-align:center;padding:16px">Nenhuma conta a receber</td></tr>';
+  document.getElementById('fin-pagar').innerHTML=`
+    <tr><td>Pátria Consolidadora</td><td>—</td><td>—</td><td><span class="badge b-gray">Consulte</span></td></tr>
+    <tr><td>Cativa Operadora</td><td>—</td><td>—</td><td><span class="badge b-gray">Consulte</span></td></tr>`;
+}
+
+// ============ FORNECEDORES ============
+const FORNECEDORES=[
+  {nome:'Pátria Consolidadora',tipo:'Consolidadora',wa:'5511999990001',tg:''},
+  {nome:'Cativa Operadora',tipo:'Operadora',wa:'5511999990002',tg:'cativa_op'},
+  {nome:'LATAM Milhas',tipo:'Milhas',wa:'',tg:''},
+  {nome:'Azul Tudo Azul',tipo:'Milhas',wa:'5511999990003',tg:''},
+  {nome:'GOL Smiles',tipo:'Milhas',wa:'',tg:''},
+  {nome:'Seguro Viagem',tipo:'Seguro',wa:'5511999990004',tg:'seguroviagem'},
+];
+function renderFornecedores(){
+  document.getElementById('lista-fornecedores').innerHTML=FORNECEDORES.map(f=>{const ini=f.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();return`<div class="fornec-row"><div class="avatar" style="background:var(--bg2);color:var(--text2)">${ini}</div><div style="flex:1"><p style="font-weight:600;font-size:13px">${f.nome}</p><p style="font-size:11px;color:var(--text2)">${f.tipo}</p></div>${f.wa?`<button class="wa-btn" onclick="window.open('https://wa.me/${f.wa}','_blank')" style="margin-right:6px">WhatsApp</button>`:''}${f.tg?`<button class="tg-btn" onclick="window.open('https://t.me/${f.tg}','_blank')">Telegram</button>`:''}</div>`;}).join('');
+}
+
+// INIT
+renderDash();
+renderCotador();
+</script>
+</body>
+</html>
