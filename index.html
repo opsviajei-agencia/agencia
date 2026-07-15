@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central da Agência</title>
+<!-- v4: vendedor de milhas, comissão, PJ/PF, financeiro mensal, notificações automáticas, autocomplete de clientes, valor por pessoa, gráfico mensal, top 5, notícias -->
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.14.0/dist/tabler-icons.min.css">
 <style>
 :root{
@@ -183,6 +185,20 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
       <div id="d-mix"><p style="color:var(--text2);font-size:13px">Nenhuma emissão ainda.</p></div>
     </div>
   </div>
+  <div class="row">
+    <div class="col raised" style="min-width:300px">
+      <div class="sec-title"><i class="ti ti-chart-bar"></i> Produção mês a mês</div>
+      <div id="d-chart"><p style="color:var(--text2);font-size:13px">Sem dados ainda.</p></div>
+    </div>
+    <div class="col raised" style="min-width:240px">
+      <div class="sec-title"><i class="ti ti-trophy" style="color:var(--amber)"></i> Top 5 clientes</div>
+      <div id="d-top5"><p style="color:var(--text2);font-size:13px">Sem dados ainda.</p></div>
+    </div>
+  </div>
+  <div class="raised">
+    <div class="sec-title"><i class="ti ti-news"></i> Últimas do turismo <button class="btn btn-sm" style="margin-left:auto" onclick="carregarNoticias(true)"><i class="ti ti-refresh"></i> Atualizar</button></div>
+    <div id="d-news"><p style="color:var(--text2);font-size:13px"><span class="spinner"></span> Carregando notícias...</p></div>
+  </div>
 </div>
 
 <!-- NOVA EMISSÃO -->
@@ -190,14 +206,16 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
   <div class="raised">
     <div class="sec-title"><i class="ti ti-user"></i> Dados do cliente</div>
     <div class="row">
-      <div class="col"><label>Nome completo</label><input id="f-nome" placeholder="Nome do passageiro"></div>
-      <div class="col"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00"></div>
+      <div class="col"><label>Nome completo</label><input id="f-nome" placeholder="Nome do passageiro" list="dl-clientes" onchange="autoFillCliente('nome')"></div>
+      <div class="col"><label>CPF</label><input id="f-cpf" placeholder="000.000.000-00" onchange="autoFillCliente('cpf')"></div>
       <div class="col"><label>Telefone (WhatsApp)</label><input id="f-tel" placeholder="(00) 00000-0000"></div>
-      <div class="col"><label>E-mail</label><input id="f-email" placeholder="email@cliente.com"></div>
+      <div class="col"><label>E-mail</label><input id="f-email" placeholder="email@cliente.com" onchange="autoFillCliente('email')"></div>
     </div>
+    <datalist id="dl-clientes"></datalist>
+    <div id="hint-recorrente" style="display:none;margin-top:8px;font-size:12px;padding:6px 10px;border-radius:var(--radius)" class="b-green"><i class="ti ti-user-check"></i> Cliente recorrente — dados preenchidos automaticamente</div>
     <div class="row">
       <div class="col"><label>Agente responsável</label><input id="f-agente" placeholder="Seu nome"></div>
-      <div class="col"><label>Nº passageiros</label><input type="number" id="f-pax" value="1" min="1"></div>
+      <div class="col"><label>Nº passageiros</label><input type="number" id="f-pax" value="1" min="1" oninput="calcLucro();calcLucroSep()"></div>
     </div>
   </div>
 
@@ -231,12 +249,15 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
         <div class="col"><label>Tipo de emissão</label>
           <select id="f-tipo"><option>LATAM Milhas</option><option>Azul Milhas</option><option>GOL Smiles</option><option>Pátria Consolidadora</option><option>Cativa Operadora</option><option>GDS Amadeus</option></select>
         </div>
+        <div class="col"><label>Trecho</label>
+          <select id="f-idavolta" onchange="toggleIdaVolta()"><option value="IV">Ida e volta</option><option value="SI">Só ida</option></select>
+        </div>
       </div>
       <div class="row">
         <div class="col"><label>Origem</label><input id="f-orig" placeholder="GRU" maxlength="3" oninput="this.value=this.value.toUpperCase()"></div>
         <div class="col"><label>Destino</label><input id="f-dest" placeholder="LIS" maxlength="3" oninput="this.value=this.value.toUpperCase()"></div>
         <div class="col"><label>Data de saída</label><input type="date" id="f-saida"></div>
-        <div class="col"><label>Data de retorno</label><input type="date" id="f-ret"></div>
+        <div class="col" id="col-ret"><label>Data de retorno</label><input type="date" id="f-ret"></div>
         <div class="col"><label>Check-in abre</label><input type="date" id="f-checkin"></div>
       </div>
     </div>
@@ -293,11 +314,28 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
     <div class="raised" style="background:var(--blue-bg);border-color:var(--blue)">
       <p style="font-size:12px;font-weight:600;color:var(--blue-text);margin-bottom:8px">Custo total calculado</p>
       <div class="row">
+        <div class="col"><label>Conta da venda</label>
+          <select id="f-conta-sep" onchange="contaChange()"><option value="PJ">PJ — Agência (com imposto)</option><option value="PF">PF — Particular (sem imposto)</option></select>
+        </div>
         <div class="col"><label>Custo total agência (R$)</label><input type="number" id="f-custo-total-sep" readonly style="font-weight:600"></div>
         <div class="col"><label>Valor cobrado cliente (R$)</label><input type="number" id="f-venda-sep" placeholder="0" oninput="calcLucroSep()"></div>
         <div class="col"><label>Imposto (R$)</label><input type="number" id="f-imposto-sep" placeholder="0" oninput="calcLucroSep()"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label>Comissão (R$)</label><input type="number" id="f-comissao-sep" placeholder="0" oninput="calcLucroSep()"></div>
+        <div class="col"><label>Comissão para (vendedor/parceiro)</label><input id="f-comissao-quem-sep" placeholder="Nome do vendedor ou parceiro"></div>
         <div class="col"><label>Lucro líquido (R$)</label><input type="number" id="f-lucro-sep" readonly style="font-weight:600"></div>
       </div>
+      <div id="pp-sep" style="display:none;margin-top:10px;font-size:13px;padding:8px 12px;border-radius:var(--radius);background:rgba(255,255,255,.7);color:var(--blue-text)"></div>
+    </div>
+  </div>
+
+  <!-- VENDEDOR DAS MILHAS -->
+  <div class="raised">
+    <div class="sec-title"><i class="ti ti-user-dollar"></i> Vendedor das milhas / fornecedor</div>
+    <div class="row">
+      <div class="col"><label>Nome do vendedor</label><input id="f-vendedor" placeholder="Quem vendeu as milhas"></div>
+      <div class="col"><label>Contato do vendedor</label><input id="f-vendedor-contato" placeholder="(00) 00000-0000 ou @usuario"><p style="font-size:11px;color:var(--text2);margin-top:3px">Telefone abre WhatsApp · @usuario abre Telegram</p></div>
     </div>
   </div>
 
@@ -305,11 +343,19 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
   <div class="raised" id="bloco-fin-unico">
     <div class="sec-title"><i class="ti ti-cash"></i> Financeiro</div>
     <div class="row">
+      <div class="col"><label>Conta da venda</label>
+        <select id="f-conta" onchange="contaChange()"><option value="PJ">PJ — Agência (com imposto)</option><option value="PF">PF — Particular (sem imposto)</option></select>
+      </div>
       <div class="col"><label>Custo agência (R$)</label><input type="number" id="f-custo" placeholder="0" oninput="calcLucro()"></div>
       <div class="col"><label>Valor cobrado (R$)</label><input type="number" id="f-venda" placeholder="0" oninput="calcLucro()"></div>
       <div class="col"><label>Imposto (R$)</label><input type="number" id="f-imposto" placeholder="0" oninput="calcLucro()"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Comissão (R$)</label><input type="number" id="f-comissao" placeholder="0" oninput="calcLucro()"></div>
+      <div class="col"><label>Comissão para (vendedor/parceiro)</label><input id="f-comissao-quem" placeholder="Nome do vendedor ou parceiro"></div>
       <div class="col"><label>Lucro líquido (R$)</label><input type="number" id="f-lucro" readonly></div>
     </div>
+    <div id="pp-unico" style="display:none;margin-top:10px;font-size:13px;padding:8px 12px;border-radius:var(--radius)" class="b-blue"></div>
     <div class="row">
       <div class="col"><label>Forma de pagamento</label>
         <select id="f-pgto" onchange="toggleFiado()"><option>Cartão de crédito</option><option>PIX</option><option>Transferência</option><option>Fiado</option><option>Parcelado</option></select>
@@ -500,13 +546,27 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
 
 <!-- FINANCEIRO -->
 <div class="screen" id="s-financeiro">
-  <div class="sec-title"><i class="ti ti-cash"></i> Balanço financeiro</div>
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+    <div class="sec-title" style="margin-bottom:0"><i class="ti ti-cash"></i> Balanço financeiro</div>
+    <select id="fin-mes" onchange="renderFinanceiro()" style="max-width:220px"></select>
+  </div>
   <div class="metric-grid" id="fin-metrics"></div>
+  <div class="row" id="fin-conta-split"></div>
+  <div class="raised" style="padding:0;overflow:hidden">
+    <div class="sec-title" style="font-size:14px;padding:14px 14px 0"><i class="ti ti-calendar-stats"></i> Produção mês a mês</div>
+    <table><thead><tr><th>Mês</th><th>Emissões</th><th>Receita</th><th>Custo</th><th>Impostos</th><th>Comissões</th><th>Lucro líquido</th></tr></thead>
+    <tbody id="fin-meses"></tbody></table>
+  </div>
   <div class="row">
-    <div class="col raised">
+    <div class="col raised" style="min-width:280px">
       <div class="sec-title" style="font-size:14px">Contas a receber (fiado)</div>
       <table><thead><tr><th>Cliente</th><th>Valor</th><th>Venc.</th><th>NF</th></tr></thead>
       <tbody id="fin-receber"></tbody></table>
+    </div>
+    <div class="col raised" style="min-width:280px">
+      <div class="sec-title" style="font-size:14px">Comissões pagas / a pagar</div>
+      <table><thead><tr><th>Para</th><th>Cliente</th><th>Valor</th><th>Mês</th></tr></thead>
+      <tbody id="fin-comissoes"></tbody></table>
     </div>
   </div>
 </div>
@@ -550,7 +610,7 @@ function goScreen(id,btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   else{const b=document.querySelector(`.nav-btn[onclick*="'${id}'"]`);if(b)b.classList.add('active');}
-  const r={dash:renderDash,emissoes:renderEmissoes,clientes:renderClientes,notif:()=>renderNotif('todas'),financeiro:renderFinanceiro,fornecedores:renderFornecedores,cotador:renderCotador};
+  const r={dash:renderDash,nova:preencherDatalist,emissoes:renderEmissoes,clientes:renderClientes,notif:()=>renderNotif('todas'),financeiro:renderFinanceiro,fornecedores:renderFornecedores,cotador:renderCotador};
   if(r[id])r[id]();
 }
 
@@ -575,11 +635,52 @@ function selCor(el){
   corSelecionada=el.dataset.cor;
 }
 
+// ============ HELPERS ============
+const fmtR=n=>'R$'+(parseFloat(n)||0).toLocaleString('pt-BR',{maximumFractionDigits:2});
+const soDigitos=s=>(s||'').replace(/\D/g,'');
+const MESES_PT=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function mesKey(e){const d=new Date(e.criado||e.saida||Date.now());return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function mesLabel(k){const[y,m]=k.split('-');return MESES_PT[parseInt(m)-1]+'/'+y;}
+function contatoVendedorURL(c){
+  c=(c||'').trim();if(!c)return null;
+  if(c.startsWith('@'))return'https://t.me/'+c.slice(1);
+  const d=soDigitos(c);if(!d)return null;
+  return'https://wa.me/'+(d.length<=11?'55'+d:d);
+}
+
+function toggleIdaVolta(){
+  const si=document.getElementById('f-idavolta').value==='SI';
+  document.getElementById('col-ret').style.display=si?'none':'block';
+  if(si)document.getElementById('f-ret').value='';
+}
+
+function contaChange(){
+  const conta=(locTipo==='sim'?document.getElementById('f-conta'):document.getElementById('f-conta-sep')).value;
+  const impU=document.getElementById('f-imposto'),impS=document.getElementById('f-imposto-sep');
+  [impU,impS].forEach(el=>{
+    if(conta==='PF'){el.value='0';el.readOnly=true;}
+    else{el.readOnly=false;}
+  });
+  document.getElementById('f-conta').value=conta;
+  document.getElementById('f-conta-sep').value=conta;
+  calcLucro();calcLucroSep();
+}
+
+function porPessoaHTML(venda,lucro){
+  const pax=parseInt(document.getElementById('f-pax').value)||1;
+  if(pax<2||!venda)return null;
+  return`<i class="ti ti-users"></i> <strong>${pax} passageiros:</strong> ${fmtR(venda/pax)} por pessoa (cobrado) · ${fmtR(lucro/pax)} lucro/pessoa`;
+}
+
 function calcLucro(){
   const v=parseFloat(document.getElementById('f-venda').value)||0;
   const c=parseFloat(document.getElementById('f-custo').value)||0;
   const i=parseFloat(document.getElementById('f-imposto').value)||0;
-  document.getElementById('f-lucro').value=(v-c-i).toFixed(2);
+  const com=parseFloat(document.getElementById('f-comissao').value)||0;
+  const lucro=v-c-i-com;
+  document.getElementById('f-lucro').value=lucro.toFixed(2);
+  const pp=document.getElementById('pp-unico');const h=porPessoaHTML(v,lucro);
+  pp.style.display=h?'block':'none';if(h)pp.innerHTML=h;
 }
 
 function calcLucroSep(){
@@ -589,7 +690,35 @@ function calcLucroSep(){
   document.getElementById('f-custo-total-sep').value=total.toFixed(2);
   const vnd=parseFloat(document.getElementById('f-venda-sep').value)||0;
   const imp=parseFloat(document.getElementById('f-imposto-sep').value)||0;
-  document.getElementById('f-lucro-sep').value=(vnd-total-imp).toFixed(2);
+  const com=parseFloat(document.getElementById('f-comissao-sep').value)||0;
+  const lucro=vnd-total-imp-com;
+  document.getElementById('f-lucro-sep').value=lucro.toFixed(2);
+  const pp=document.getElementById('pp-sep');const h=porPessoaHTML(vnd,lucro);
+  pp.style.display=h?'block':'none';if(h)pp.innerHTML=h;
+}
+
+// ============ CLIENTE RECORRENTE ============
+function preencherDatalist(){
+  const dl=document.getElementById('dl-clientes');
+  dl.innerHTML=loadCL().map(c=>`<option value="${(c.nome||'').replace(/"/g,'&quot;')}">`).join('');
+}
+function autoFillCliente(campo){
+  const cls=loadCL();
+  const nome=document.getElementById('f-nome').value.trim().toLowerCase();
+  const cpf=soDigitos(document.getElementById('f-cpf').value);
+  const email=document.getElementById('f-email').value.trim().toLowerCase();
+  let c=null;
+  if(campo==='cpf'&&cpf)c=cls.find(x=>soDigitos(x.cpf)===cpf&&cpf.length>=11);
+  else if(campo==='email'&&email)c=cls.find(x=>(x.email||'').trim().toLowerCase()===email);
+  else if(campo==='nome'&&nome)c=cls.find(x=>(x.nome||'').trim().toLowerCase()===nome);
+  if(!c)return;
+  if(c.nome)document.getElementById('f-nome').value=c.nome;
+  if(c.cpf)document.getElementById('f-cpf').value=c.cpf;
+  if(c.tel)document.getElementById('f-tel').value=c.tel;
+  if(c.email)document.getElementById('f-email').value=c.email;
+  const hint=document.getElementById('hint-recorrente');
+  hint.style.display='block';
+  setTimeout(()=>hint.style.display='none',6000);
 }
 
 function toggleFiado(){
@@ -611,6 +740,8 @@ function salvarEmissao(){
     pax:document.getElementById('f-pax').value,
     obs:document.getElementById('f-obs').value,
     futuros:document.getElementById('f-futuros').value,
+    vendedor:document.getElementById('f-vendedor').value.trim(),
+    vendedorContato:document.getElementById('f-vendedor-contato').value.trim(),
     cor:corSelecionada,
     status:'Ativo',
     criado:new Date().toISOString(),
@@ -627,9 +758,13 @@ function salvarEmissao(){
       saida:document.getElementById('f-saida').value,
       ret:document.getElementById('f-ret').value,
       checkin:document.getElementById('f-checkin').value,
+      idaVolta:document.getElementById('f-idavolta').value,
       custo:document.getElementById('f-custo').value,
       venda:document.getElementById('f-venda').value,
       imposto:document.getElementById('f-imposto').value,
+      comissao:document.getElementById('f-comissao').value,
+      comissaoQuem:document.getElementById('f-comissao-quem').value,
+      conta:document.getElementById('f-conta').value,
       lucro:document.getElementById('f-lucro').value,
       pgto:document.getElementById('f-pgto').value,
       datacobranca:document.getElementById('f-datacobranca').value,
@@ -661,9 +796,13 @@ function salvarEmissao(){
       milhasVolta:document.getElementById('f-milhas-volta').value,
       vmilheiroVolta:document.getElementById('f-vmilheiro-volta').value,
       // FINANCEIRO CONSOLIDADO
+      idaVolta:'IV',
       custo:document.getElementById('f-custo-total-sep').value,
       venda:document.getElementById('f-venda-sep').value,
       imposto:document.getElementById('f-imposto-sep').value,
+      comissao:document.getElementById('f-comissao-sep').value,
+      comissaoQuem:document.getElementById('f-comissao-quem-sep').value,
+      conta:document.getElementById('f-conta-sep').value,
       lucro:document.getElementById('f-lucro-sep').value,
       pgto:document.getElementById('f-pgto-sep').value,
       datacobranca:document.getElementById('f-datacobranca-sep').value,
@@ -681,41 +820,76 @@ function salvarEmissao(){
 }
 
 function limparFormNova(){
-  ['f-nome','f-cpf','f-tel','f-email','f-agente','f-obs','f-futuros','f-pnr','f-orig','f-dest','f-custo','f-venda','f-imposto','f-lucro','f-pnr-ida','f-orig-ida','f-dest-ida','f-custo-ida','f-milhas-ida','f-vmilheiro-ida','f-pnr-volta','f-orig-volta','f-dest-volta','f-custo-volta','f-milhas-volta','f-vmilheiro-volta','f-custo-total-sep','f-venda-sep','f-imposto-sep','f-lucro-sep'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-nome','f-cpf','f-tel','f-email','f-agente','f-obs','f-futuros','f-vendedor','f-vendedor-contato','f-comissao','f-comissao-quem','f-comissao-sep','f-comissao-quem-sep','f-pnr','f-orig','f-dest','f-custo','f-venda','f-imposto','f-lucro','f-pnr-ida','f-orig-ida','f-dest-ida','f-custo-ida','f-milhas-ida','f-vmilheiro-ida','f-pnr-volta','f-orig-volta','f-dest-volta','f-custo-volta','f-milhas-volta','f-vmilheiro-volta','f-custo-total-sep','f-venda-sep','f-imposto-sep','f-lucro-sep'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   setLocTipo('sim');
   corSelecionada='#378ADD';
   document.querySelectorAll('.cor-dot').forEach((d,i)=>{d.classList.toggle('sel',i===0);});
+  document.getElementById('f-pax').value='1';
+  document.getElementById('f-conta').value='PJ';
+  document.getElementById('f-conta-sep').value='PJ';
+  document.getElementById('f-idavolta').value='IV';
+  document.getElementById('col-ret').style.display='block';
+  document.getElementById('f-imposto').readOnly=false;
+  document.getElementById('f-imposto-sep').readOnly=false;
+  document.getElementById('pp-unico').style.display='none';
+  document.getElementById('pp-sep').style.display='none';
 }
 
 function upsertCliente(em){
   let cls=loadCL();
-  const idx=cls.findIndex(c=>c.nome===em.nome);
-  if(idx>=0){cls[idx].viagens=(cls[idx].viagens||0)+1;cls[idx].futuros=em.futuros||cls[idx].futuros;cls[idx].tel=em.tel||cls[idx].tel;}
-  else cls.push({nome:em.nome,tel:em.tel,email:em.email,viagens:1,futuros:em.futuros,desde:new Date().toISOString()});
+  const cpfEm=soDigitos(em.cpf);
+  const idx=cls.findIndex(c=>(cpfEm&&soDigitos(c.cpf)===cpfEm)||c.nome===em.nome);
+  if(idx>=0){cls[idx].viagens=(cls[idx].viagens||0)+1;cls[idx].futuros=em.futuros||cls[idx].futuros;cls[idx].tel=em.tel||cls[idx].tel;cls[idx].cpf=em.cpf||cls[idx].cpf;cls[idx].email=em.email||cls[idx].email;}
+  else cls.push({nome:em.nome,cpf:em.cpf,tel:em.tel,email:em.email,viagens:1,futuros:em.futuros,desde:new Date().toISOString()});
   saveCL(cls);
+  preencherDatalist();
+}
+
+// ============ STATUS AUTOMÁTICO ============
+function autoAtualizarStatus(){
+  const list=loadEM();let mudou=false;
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  list.forEach(e=>{
+    if(e.statusManual||!e.saida)return;
+    const sd=new Date(e.saida+'T00:00');
+    const fd=new Date((e.ret||e.retVolta||e.saida)+'T23:59');
+    let novo=e.status;
+    if(hoje>fd)novo='Encerrado';
+    else if(hoje>=sd)novo='Em viagem';
+    if(novo!==e.status){e.status=novo;mudou=true;}
+  });
+  if(mudou)saveEM(list);
 }
 
 // ============ EMISSÕES ============
 let emFiltro='';let emStatus='';
 function renderEmissoes(){
+  autoAtualizarStatus();
   let list=loadEM();
-  if(emFiltro)list=list.filter(e=>(e.nome+(e.dest||'')+(e.pnr||'')+(e.orig||'')).toLowerCase().includes(emFiltro.toLowerCase()));
+  if(emFiltro)list=list.filter(e=>(e.nome+(e.dest||'')+(e.pnr||'')+(e.orig||'')+(e.vendedor||'')).toLowerCase().includes(emFiltro.toLowerCase()));
   if(emStatus)list=list.filter(e=>e.status===emStatus);
   const tb=document.getElementById('tb-emissoes');
   if(!list.length){tb.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:24px">Nenhuma emissão encontrada</td></tr>';return;}
   tb.innerHTML=list.map(e=>{
     const cor=e.cor||'#378ADD';
-    const rota=e.locTipo==='nao'?`${e.orig||'?'}→${e.dest||'?'} / ${e.origVolta||'?'}→${e.destVolta||'?'}`:`${e.orig||'?'}→${e.dest||'?'}`;
+    const soIda=e.idaVolta==='SI'||(!e.ret&&e.locTipo!=='nao'&&e.idaVolta!=='IV');
+    const seta=soIda?'→':'⇄';
+    const rota=e.locTipo==='nao'?`${e.orig||'?'}→${e.dest||'?'} / ${e.origVolta||'?'}→${e.destVolta||'?'}`:`${e.orig||'?'} ${seta} ${e.dest||'?'}`;
     const cia=e.locTipo==='nao'?`${e.ciaIda||''} / ${e.ciaVolta||''}`:e.cia||'';
+    const trechoBadge=e.locTipo==='nao'?'<span class="badge b-purple">Ida e volta</span>':(soIda?'<span class="badge b-gray">Só ida</span>':'<span class="badge b-purple">Ida e volta</span>');
+    const contatoURL=contatoVendedorURL(e.vendedorContato);
+    const vendedorHtml=e.vendedor?`<br><span style="font-size:11px;color:var(--text2)"><i class="ti ti-user-dollar"></i> ${e.vendedor}</span>`:'';
+    const contatoBtn=contatoURL?`<button class="btn btn-icon" style="color:${(e.vendedorContato||'').trim().startsWith('@')?'#229ED9':'#25D366'}" onclick="window.open('${contatoURL}','_blank')" title="Falar com ${e.vendedor||'vendedor'} (${(e.vendedorContato||'').trim().startsWith('@')?'Telegram':'WhatsApp'})"><i class="ti ${(e.vendedorContato||'').trim().startsWith('@')?'ti-brand-telegram':'ti-brand-whatsapp'}"></i></button>`:'';
     return`<tr>
       <td style="width:4px;padding:0"><div style="width:4px;background:${cor};height:100%;min-height:40px;border-radius:4px"></div></td>
-      <td><strong>${e.nome}</strong><br><span style="font-size:11px;color:var(--text2)">${e.pnr||e.pnrIda||'—'}${e.pnrVolta?' / '+e.pnrVolta:''}</span></td>
-      <td>${rota}<br><span style="font-size:11px;color:var(--text2)">${cia}</span></td>
+      <td><strong>${e.nome}</strong>${parseInt(e.pax)>1?` <span class="badge b-gray">${e.pax} pax</span>`:''}<br><span style="font-size:11px;color:var(--text2)">${e.pnr||e.pnrIda||'—'}${e.pnrVolta?' / '+e.pnrVolta:''}</span></td>
+      <td>${rota} ${trechoBadge}<br><span style="font-size:11px;color:var(--text2)">${cia}</span></td>
       <td>${e.saida?e.saida.split('-').reverse().join('/'):'—'}</td>
-      <td>${tipoBadge(e.tipo||e.tipoIda)}</td>
-      <td style="color:var(--green);font-weight:600">R$${parseFloat(e.lucro||0).toLocaleString('pt-BR')}</td>
-      <td>${statusBadge(e.status)}</td>
+      <td>${tipoBadge(e.tipo||e.tipoIda)}${vendedorHtml}</td>
+      <td style="color:var(--green);font-weight:600">R$${parseFloat(e.lucro||0).toLocaleString('pt-BR')}${parseInt(e.pax)>1&&e.venda?`<br><span style="font-size:11px;color:var(--text2);font-weight:400">${fmtR((parseFloat(e.venda)||0)/parseInt(e.pax))}/pessoa</span>`:''}</td>
+      <td>${statusBadge(e.status)}${e.conta?`<br><span class="badge ${e.conta==='PF'?'b-amber':'b-blue'}" style="margin-top:3px">${e.conta}</span>`:''}</td>
       <td style="display:flex;gap:4px">
+        ${contatoBtn}
         <button class="btn btn-icon" onclick="abrirEditar(${e.id})" title="Editar"><i class="ti ti-edit"></i></button>
         <button class="btn btn-icon" onclick="excluirEmissao(${e.id})" title="Excluir"><i class="ti ti-trash"></i></button>
       </td>
@@ -743,10 +917,20 @@ function abrirEditar(id){
       <div class="col"><label>NF</label><select id="e-nf"><option ${em.nf==='Pendente'?'selected':''}>Pendente</option><option ${em.nf==='Emitida'?'selected':''}>Emitida</option></select></div>
     </div>
     <div class="row">
+      <div class="col"><label>Conta da venda</label><select id="e-conta"><option value="PJ" ${em.conta!=='PF'?'selected':''}>PJ — Agência</option><option value="PF" ${em.conta==='PF'?'selected':''}>PF — Particular</option></select></div>
       <div class="col"><label>Valor cobrado (R$)</label><input type="number" id="e-venda" value="${em.venda||0}" oninput="recalcEdit()"></div>
       <div class="col"><label>Custo agência (R$)</label><input type="number" id="e-custo" value="${em.custo||0}" oninput="recalcEdit()"></div>
       <div class="col"><label>Imposto (R$)</label><input type="number" id="e-imposto" value="${em.imposto||0}" oninput="recalcEdit()"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Comissão (R$)</label><input type="number" id="e-comissao" value="${em.comissao||0}" oninput="recalcEdit()"></div>
+      <div class="col"><label>Comissão para</label><input id="e-comissao-quem" value="${em.comissaoQuem||''}"></div>
       <div class="col"><label>Lucro líquido (R$)</label><input type="number" id="e-lucro" value="${em.lucro||0}" readonly></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Vendedor das milhas</label><input id="e-vendedor" value="${em.vendedor||''}"></div>
+      <div class="col"><label>Contato do vendedor</label><input id="e-vendedor-contato" value="${em.vendedorContato||''}" placeholder="(00) 00000-0000 ou @usuario"></div>
+      <div class="col"><label>Nº passageiros</label><input type="number" id="e-pax" value="${em.pax||1}" min="1"></div>
     </div>
     <div class="row">
       <div class="col"><label>Observações</label><textarea id="e-obs">${em.obs||''}</textarea></div>
@@ -768,19 +952,28 @@ function recalcEdit(){
   const v=parseFloat(document.getElementById('e-venda').value)||0;
   const c=parseFloat(document.getElementById('e-custo').value)||0;
   const i=parseFloat(document.getElementById('e-imposto').value)||0;
-  document.getElementById('e-lucro').value=(v-c-i).toFixed(2);
+  const com=parseFloat(document.getElementById('e-comissao').value)||0;
+  document.getElementById('e-lucro').value=(v-c-i-com).toFixed(2);
 }
 function salvarEdicao(){
   const list=loadEM();
   const idx=list.findIndex(e=>e.id===editandoId);
   if(idx<0)return;
+  const novoStatus=document.getElementById('e-status').value;
   list[idx]={...list[idx],
     nome:document.getElementById('e-nome').value,
-    status:document.getElementById('e-status').value,
+    status:novoStatus,
+    statusManual:novoStatus!==list[idx].status?true:list[idx].statusManual,
     nf:document.getElementById('e-nf').value,
+    conta:document.getElementById('e-conta').value,
     venda:document.getElementById('e-venda').value,
     custo:document.getElementById('e-custo').value,
     imposto:document.getElementById('e-imposto').value,
+    comissao:document.getElementById('e-comissao').value,
+    comissaoQuem:document.getElementById('e-comissao-quem').value,
+    vendedor:document.getElementById('e-vendedor').value,
+    vendedorContato:document.getElementById('e-vendedor-contato').value,
+    pax:document.getElementById('e-pax').value,
     lucro:document.getElementById('e-lucro').value,
     obs:document.getElementById('e-obs').value,
     futuros:document.getElementById('e-futuros').value,
@@ -797,6 +990,7 @@ function fecharModal(){
 
 // ============ DASHBOARD ============
 function renderDash(){
+  autoAtualizarStatus();
   const ems=loadEM();const now=new Date();
   const mes=ems.filter(e=>{if(!e.criado)return true;const d=new Date(e.criado);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
   const receita=mes.reduce((s,e)=>s+(parseFloat(e.venda)||0),0);
@@ -821,6 +1015,67 @@ function renderDash(){
   const total=ems.length||1;const colors=['#378ADD','#639922','#EF9F27','#E24B4A','#534AB7','#1D9E75'];
   const mixHtml=Object.entries(tipos).map(([t,n],i)=>`<div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px"><span>${t}</span><span style="font-weight:600">${Math.round(n/total*100)}%</span></div><div class="progress"><div class="progress-bar" style="width:${Math.round(n/total*100)}%;background:${colors[i%colors.length]}"></div></div><div style="margin-bottom:8px"></div>`).join('');
   document.getElementById('d-mix').innerHTML=mixHtml||'<p style="color:var(--text2);font-size:13px">Nenhuma emissão ainda.</p>';
+  renderChartMensal(ems);
+  renderTop5(ems);
+  atualizarBadgeNotif();
+  carregarNoticias();
+}
+
+// ============ GRÁFICO MÊS A MÊS ============
+function renderChartMensal(ems){
+  const el=document.getElementById('d-chart');
+  const grupos=agruparPorMes(ems);
+  const chaves=Object.keys(grupos).sort().slice(-12);
+  if(!chaves.length){el.innerHTML='<p style="color:var(--text2);font-size:13px">Sem dados ainda.</p>';return;}
+  const max=Math.max(...chaves.map(k=>grupos[k].rec),1);
+  el.innerHTML=`<div style="display:flex;align-items:flex-end;gap:8px;height:150px;padding-top:10px">${chaves.map(k=>{const g=grupos[k];
+    const hR=Math.max(4,Math.round(g.rec/max*120));const hL=Math.max(2,Math.round(Math.max(g.lliq,0)/max*120));
+    return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px" title="${mesLabel(k)}: Receita ${fmtR(g.rec)} · Lucro ${fmtR(g.lliq)}">
+      <span style="font-size:10px;color:var(--text2)">${fmtR(g.rec/1000).replace(',00','')}k</span>
+      <div style="display:flex;gap:2px;align-items:flex-end">
+        <div style="width:16px;height:${hR}px;background:var(--blue);border-radius:3px 3px 0 0"></div>
+        <div style="width:16px;height:${hL}px;background:#639922;border-radius:3px 3px 0 0"></div>
+      </div>
+      <span style="font-size:10px;color:var(--text2)">${mesLabel(k).replace('/20','/')}</span>
+    </div>`;}).join('')}</div>
+  <div style="display:flex;gap:14px;margin-top:8px;font-size:11px;color:var(--text2)"><span><span style="display:inline-block;width:10px;height:10px;background:var(--blue);border-radius:2px"></span> Receita</span><span><span style="display:inline-block;width:10px;height:10px;background:#639922;border-radius:2px"></span> Lucro líquido</span></div>`;
+}
+
+// ============ TOP 5 CLIENTES ============
+function renderTop5(ems){
+  const el=document.getElementById('d-top5');
+  const por={};
+  ems.forEach(e=>{if(!e.nome)return;if(!por[e.nome])por[e.nome]={n:0,rec:0,lucro:0};por[e.nome].n++;por[e.nome].rec+=parseFloat(e.venda)||0;por[e.nome].lucro+=parseFloat(e.lucro)||0;});
+  const top=Object.entries(por).sort((a,b)=>b[1].rec-a[1].rec).slice(0,5);
+  if(!top.length){el.innerHTML='<p style="color:var(--text2);font-size:13px">Sem dados ainda.</p>';return;}
+  const medals=['🥇','🥈','🥉','4º','5º'];
+  el.innerHTML=top.map(([nome,d],i)=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:0.5px solid var(--border)"><span style="font-size:${i<3?'16':'12'}px;width:24px;text-align:center;color:var(--text2)">${medals[i]}</span><div style="flex:1"><p style="font-size:13px;font-weight:600">${nome}</p><p style="font-size:11px;color:var(--text2)">${d.n>1?d.n+' emissões':'1 emissão'} · lucro ${fmtR(d.lucro)}</p></div><span style="font-size:13px;font-weight:600;color:var(--blue)">${fmtR(d.rec)}</span></div>`).join('');
+}
+
+// ============ NOTÍCIAS DO TURISMO ============
+async function carregarNoticias(force){
+  const el=document.getElementById('d-news');
+  const CK='ag_news_cache_v1';
+  try{
+    if(!force){const c=JSON.parse(localStorage.getItem(CK)||'null');
+      if(c&&Date.now()-c.t<36e5){el.innerHTML=c.html;return;}}
+    const feed='https://news.google.com/rss/search?q=turismo+OR+%22milhas+a%C3%A9reas%22+OR+%22passagens+a%C3%A9reas%22+OR+avia%C3%A7%C3%A3o+when:2d&hl=pt-BR&gl=BR&ceid=BR:pt-419';
+    const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(feed));
+    const j=await r.json();
+    const doc=new DOMParser().parseFromString(j.contents,'text/xml');
+    const items=[...doc.querySelectorAll('item')].slice(0,8);
+    if(!items.length)throw new Error('vazio');
+    const html='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:8px">'+items.map(it=>{
+      const t=(it.querySelector('title')?.textContent||'').split(' - ');
+      const fonte=t.length>1?t.pop():'';
+      const link=it.querySelector('link')?.textContent||'#';
+      const dt=new Date(it.querySelector('pubDate')?.textContent||Date.now());
+      return`<a href="${link}" target="_blank" style="text-decoration:none;color:var(--text);border:0.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;display:block;transition:background .15s" onmouseover="this.style.background='var(--bg2)'" onmouseout="this.style.background='transparent'"><p style="font-size:13px;font-weight:500;line-height:1.35">${t.join(' - ')}</p><p style="font-size:11px;color:var(--text2);margin-top:4px">${fonte}${fonte?' · ':''}${dt.toLocaleDateString('pt-BR')} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}</p></a>`;}).join('')+'</div>';
+    el.innerHTML=html;
+    localStorage.setItem(CK,JSON.stringify({t:Date.now(),html}));
+  }catch(e){
+    el.innerHTML='<p style="color:var(--text2);font-size:13px">Não foi possível carregar as notícias agora. <button class="btn btn-sm" onclick="carregarNoticias(true)">Tentar novamente</button></p>';
+  }
 }
 
 // ============ COTADOR ============
@@ -932,30 +1187,95 @@ function renderClientes(filtro){
 function filtrarClientes(v){renderClientes(v);}
 
 // ============ NOTIFICAÇÕES ============
-function renderNotif(tipo){
-  const ems=loadEM();const now=new Date();const notifs=[];
+function diasAte(dataStr){
+  const hoje=new Date();hoje.setHours(0,0,0,0);
+  return Math.round((new Date(dataStr+'T00:00')-hoje)/(864e5));
+}
+function gerarNotifs(){
+  autoAtualizarStatus();
+  const ems=loadEM();const notifs=[];
   ems.forEach(e=>{
+    // Check-in (até 7 dias antes)
     const checkins=[{d:e.checkin,label:'ida'},{d:e.checkinVolta,label:'volta'}].filter(c=>c.d);
-    checkins.forEach(ch=>{const dias=Math.round((new Date(ch.d)-now)/(864e5));if(dias>=0&&dias<=3)notifs.push({tipo:'checkin',prioridade:dias===0?'danger':'warn',titulo:`Check-in ${ch.label} ${dias===0?'hoje':dias===1?'amanhã':`em ${dias} dias`}`,desc:`${e.nome} · ${e.cia||e.ciaIda||''}`});});
-    if(e.pgto==='Fiado'&&e.datacobranca){const dias=Math.round((new Date(e.datacobranca)-now)/(864e5));if(dias<=5)notifs.push({tipo:'cobranca',prioridade:dias<=0?'danger':'warn',titulo:dias<=0?'Cobrança em atraso':`Cobrança em ${dias} dias`,desc:`${e.nome} · R$${parseFloat(e.venda||0).toLocaleString('pt-BR')}`});}
-    if(e.saida){const dias=Math.round((new Date(e.saida)-now)/(864e5));if(dias===-1||dias===-2)notifs.push({tipo:'posviagem',prioridade:'ok',titulo:'Solicitar avaliação',desc:`${e.nome} · voltou há ${Math.abs(dias)} dia(s)`});}
+    checkins.forEach(ch=>{const dias=diasAte(ch.d);if(dias>=0&&dias<=7)notifs.push({tipo:'checkin',prioridade:dias===0?'danger':dias<=2?'warn':'info',ord:dias,titulo:`Check-in ${ch.label} ${dias===0?'HOJE':dias===1?'amanhã':`em ${dias} dias`}`,desc:`${e.nome} · ${e.cia||e.ciaIda||''} · ${e.pnr||e.pnrIda||''}`});});
+    // Embarque próximo (até 5 dias)
+    if(e.saida){const dias=diasAte(e.saida);
+      if(dias>=0&&dias<=5)notifs.push({tipo:'checkin',prioridade:dias<=1?'warn':'info',ord:dias,titulo:dias===0?'Embarque HOJE':`Embarque em ${dias} dia${dias>1?'s':''}`,desc:`${e.nome} · ${e.orig||''}→${e.dest||''}`});
+      // Pós-viagem (até 5 dias após o fim)
+      const fim=e.ret||e.saida;const dFim=diasAte(fim);
+      if(dFim<0&&dFim>=-5)notifs.push({tipo:'posviagem',prioridade:'ok',ord:10+Math.abs(dFim),titulo:'Pós-viagem: pedir avaliação e indicar próximo destino',desc:`${e.nome} · voltou há ${Math.abs(dFim)} dia(s)${e.futuros?' · deseja: '+e.futuros:''}`});
+    }
+    // Cobrança fiado (vencida ou até 7 dias)
+    if(e.pgto==='Fiado'&&e.datacobranca){const dias=diasAte(e.datacobranca);
+      if(dias<=0)notifs.push({tipo:'cobranca',prioridade:'danger',ord:-5,titulo:dias===0?'Cobrança vence HOJE':`Cobrança vencida há ${Math.abs(dias)} dia(s)`,desc:`${e.nome} · ${fmtR(e.venda)}`});
+      else if(dias<=7)notifs.push({tipo:'cobranca',prioridade:'warn',ord:dias,titulo:`Cobrança em ${dias} dia${dias>1?'s':''}`,desc:`${e.nome} · ${fmtR(e.venda)}`});}
+    // NF pendente em conta PJ com viagem encerrada
+    if(e.nf==='Pendente'&&e.conta!=='PF'&&e.status==='Encerrado')notifs.push({tipo:'cobranca',prioridade:'warn',ord:8,titulo:'NF pendente de emissão',desc:`${e.nome} · ${fmtR(e.venda)}`});
   });
+  notifs.sort((a,b)=>a.ord-b.ord);
+  return notifs;
+}
+function renderNotif(tipo){
+  const notifs=gerarNotifs();
   const filtradas=tipo==='todas'?notifs:notifs.filter(n=>n.tipo===tipo);
-  document.getElementById('lista-notif').innerHTML=filtradas.length?filtradas.map(n=>`<div class="notif ${n.prioridade}"><strong>${n.titulo}</strong> — ${n.desc}</div>`).join(''):'<p style="color:var(--text2);font-size:13px">Nenhuma notificação.</p>';
+  document.getElementById('lista-notif').innerHTML=filtradas.length?filtradas.map(n=>`<div class="notif ${n.prioridade}"><strong>${n.titulo}</strong> — ${n.desc}</div>`).join(''):'<p style="color:var(--text2);font-size:13px">Nenhuma notificação no momento. Elas aparecem automaticamente conforme as datas se aproximam (check-in até 7 dias, embarque até 5, cobranças e pós-viagem).</p>';
+  atualizarBadgeNotif(notifs);
+}
+function atualizarBadgeNotif(notifs){
+  notifs=notifs||gerarNotifs();
+  const btn=document.querySelector(`.nav-btn[onclick*="'notif'"]`);
+  if(!btn)return;
+  let b=btn.querySelector('.notif-count');
+  const urgentes=notifs.filter(n=>n.prioridade==='danger'||n.prioridade==='warn').length;
+  if(!urgentes){if(b)b.remove();return;}
+  if(!b){b=document.createElement('span');b.className='notif-count';b.style.cssText='background:var(--red);color:#fff;border-radius:10px;font-size:10px;font-weight:600;padding:1px 6px;margin-left:2px';btn.appendChild(b);}
+  b.textContent=urgentes;
 }
 function filtNotif(f,btn){document.querySelectorAll('.tabs .tab-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderNotif(f);}
 
 // ============ FINANCEIRO ============
+function agruparPorMes(ems){
+  const g={};
+  ems.forEach(e=>{const k=mesKey(e);if(!g[k])g[k]={ems:0,rec:0,cus:0,imp:0,com:0,lliq:0};
+    g[k].ems++;g[k].rec+=parseFloat(e.venda)||0;g[k].cus+=parseFloat(e.custo)||0;g[k].imp+=parseFloat(e.imposto)||0;g[k].com+=parseFloat(e.comissao)||0;g[k].lliq+=parseFloat(e.lucro)||0;});
+  return g;
+}
 function renderFinanceiro(){
-  const ems=loadEM();const now=new Date();
-  const mes=ems.filter(e=>{if(!e.criado)return true;const d=new Date(e.criado);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();});
-  const rec=mes.reduce((s,e)=>s+(parseFloat(e.venda)||0),0);
-  const cus=mes.reduce((s,e)=>s+(parseFloat(e.custo)||0),0);
-  const lbrt=rec-cus;const imp=mes.reduce((s,e)=>s+(parseFloat(e.imposto)||0),0);
-  const lliq=lbrt-imp;const marg=rec>0?Math.round(lliq/rec*100):0;
-  document.getElementById('fin-metrics').innerHTML=`<div class="metric"><div class="lbl">Receita bruta</div><div class="val" style="color:var(--green)">R$${rec.toLocaleString('pt-BR')}</div></div><div class="metric"><div class="lbl">Custo emissões</div><div class="val" style="color:var(--red)">R$${cus.toLocaleString('pt-BR')}</div></div><div class="metric"><div class="lbl">Lucro bruto</div><div class="val" style="color:var(--green)">R$${lbrt.toLocaleString('pt-BR')}</div></div><div class="metric"><div class="lbl">Impostos</div><div class="val" style="color:var(--red)">R$${imp.toLocaleString('pt-BR')}</div></div><div class="metric"><div class="lbl">Lucro líquido</div><div class="val" style="color:var(--green)">R$${lliq.toLocaleString('pt-BR')}</div></div><div class="metric"><div class="lbl">Margem</div><div class="val" style="color:var(--blue)">${marg}%</div></div>`;
-  const fiados=ems.filter(e=>e.pgto==='Fiado'||e.pgto==='Fiado');
-  document.getElementById('fin-receber').innerHTML=fiados.length?fiados.map(e=>`<tr><td>${e.nome}</td><td>R$${parseFloat(e.venda||0).toLocaleString('pt-BR')}</td><td>${e.datacobranca?e.datacobranca.split('-').reverse().join('/'):'—'}</td><td><span class="badge ${e.nf==='Emitida'?'b-green':'b-red'}">${e.nf||'Pendente'}</span></td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--text2);text-align:center;padding:16px">Nenhuma conta a receber</td></tr>';
+  autoAtualizarStatus();
+  const ems=loadEM();
+  const sel=document.getElementById('fin-mes');
+  const grupos=agruparPorMes(ems);
+  const chaves=Object.keys(grupos).sort().reverse();
+  const atual=sel.value||mesKey({criado:new Date().toISOString()});
+  sel.innerHTML=`<option value="todos">📊 Período todo</option>`+chaves.map(k=>`<option value="${k}">${mesLabel(k)}</option>`).join('');
+  sel.value=[...sel.options].some(o=>o.value===atual)?atual:'todos';
+  const filtro=sel.value;
+  const base=filtro==='todos'?ems:ems.filter(e=>mesKey(e)===filtro);
+  const rec=base.reduce((s,e)=>s+(parseFloat(e.venda)||0),0);
+  const cus=base.reduce((s,e)=>s+(parseFloat(e.custo)||0),0);
+  const imp=base.reduce((s,e)=>s+(parseFloat(e.imposto)||0),0);
+  const com=base.reduce((s,e)=>s+(parseFloat(e.comissao)||0),0);
+  const lbrt=rec-cus;const lliq=lbrt-imp-com;const marg=rec>0?Math.round(lliq/rec*100):0;
+  document.getElementById('fin-metrics').innerHTML=`<div class="metric"><div class="lbl">Emissões</div><div class="val" style="color:var(--blue)">${base.length}</div></div><div class="metric"><div class="lbl">Receita bruta</div><div class="val" style="color:var(--green)">${fmtR(rec)}</div></div><div class="metric"><div class="lbl">Custo emissões</div><div class="val" style="color:var(--red)">${fmtR(cus)}</div></div><div class="metric"><div class="lbl">Impostos</div><div class="val" style="color:var(--red)">${fmtR(imp)}</div></div><div class="metric"><div class="lbl">Comissões</div><div class="val" style="color:var(--amber)">${fmtR(com)}</div></div><div class="metric"><div class="lbl">Lucro líquido</div><div class="val" style="color:var(--green)">${fmtR(lliq)}</div></div><div class="metric"><div class="lbl">Margem</div><div class="val" style="color:var(--blue)">${marg}%</div></div>`;
+  // Split PJ x PF
+  const pj=base.filter(e=>e.conta!=='PF');const pf=base.filter(e=>e.conta==='PF');
+  const sub=(l,c)=>({rec:l.reduce((s,e)=>s+(parseFloat(e.venda)||0),0),lliq:l.reduce((s,e)=>s+(parseFloat(e.lucro)||0),0),n:l.length});
+  const sPJ=sub(pj),sPF=sub(pf);
+  document.getElementById('fin-conta-split').innerHTML=`
+    <div class="col raised" style="border-left:3px solid var(--blue)"><p style="font-size:12px;font-weight:600;color:var(--blue-text)">🏢 Conta PJ — Agência (com imposto)</p><p style="font-size:13px;margin-top:6px">${sPJ.n} emissões · Receita ${fmtR(sPJ.rec)} · <strong>Lucro ${fmtR(sPJ.lliq)}</strong></p></div>
+    <div class="col raised" style="border-left:3px solid var(--amber)"><p style="font-size:12px;font-weight:600;color:var(--amber-text)">👤 Conta PF — Particular (sem imposto)</p><p style="font-size:13px;margin-top:6px">${sPF.n} emissões · Receita ${fmtR(sPF.rec)} · <strong>Lucro ${fmtR(sPF.lliq)}</strong></p></div>`;
+  // Tabela mês a mês
+  const tot={ems:0,rec:0,cus:0,imp:0,com:0,lliq:0};
+  document.getElementById('fin-meses').innerHTML=(chaves.length?chaves.map(k=>{const g=grupos[k];Object.keys(tot).forEach(x=>tot[x]+=g[x]);
+    return`<tr style="${k===filtro?'background:var(--blue-bg)':''}"><td><strong>${mesLabel(k)}</strong></td><td>${g.ems}</td><td>${fmtR(g.rec)}</td><td style="color:var(--red)">${fmtR(g.cus)}</td><td style="color:var(--red)">${fmtR(g.imp)}</td><td style="color:var(--amber)">${fmtR(g.com)}</td><td style="color:var(--green);font-weight:600">${fmtR(g.lliq)}</td></tr>`;}).join('')
+    +`<tr style="background:var(--bg2);font-weight:600"><td>TOTAL</td><td>${tot.ems}</td><td>${fmtR(tot.rec)}</td><td style="color:var(--red)">${fmtR(tot.cus)}</td><td style="color:var(--red)">${fmtR(tot.imp)}</td><td style="color:var(--amber)">${fmtR(tot.com)}</td><td style="color:var(--green)">${fmtR(tot.lliq)}</td></tr>`
+    :'<tr><td colspan="7" style="color:var(--text2);text-align:center;padding:16px">Nenhuma emissão ainda</td></tr>');
+  // Contas a receber
+  const fiados=ems.filter(e=>e.pgto==='Fiado');
+  document.getElementById('fin-receber').innerHTML=fiados.length?fiados.map(e=>`<tr><td>${e.nome}</td><td>${fmtR(e.venda)}</td><td>${e.datacobranca?e.datacobranca.split('-').reverse().join('/'):'—'}</td><td><span class="badge ${e.nf==='Emitida'?'b-green':'b-red'}">${e.nf||'Pendente'}</span></td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--text2);text-align:center;padding:16px">Nenhuma conta a receber</td></tr>';
+  // Comissões
+  const comList=base.filter(e=>(parseFloat(e.comissao)||0)>0);
+  document.getElementById('fin-comissoes').innerHTML=comList.length?comList.map(e=>`<tr><td><strong>${e.comissaoQuem||'—'}</strong></td><td>${e.nome}</td><td style="color:var(--amber);font-weight:600">${fmtR(e.comissao)}</td><td>${mesLabel(mesKey(e))}</td></tr>`).join(''):'<tr><td colspan="4" style="color:var(--text2);text-align:center;padding:16px">Nenhuma comissão lançada</td></tr>';
 }
 
 // ============ FORNECEDORES ============
@@ -972,6 +1292,8 @@ function renderFornecedores(){
 }
 
 // INIT
+autoAtualizarStatus();
+preencherDatalist();
 renderDash();
 renderCotador();
 </script>
