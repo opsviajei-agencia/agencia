@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Central da Agência</title>
-<!-- v4: vendedor de milhas, comissão, PJ/PF, financeiro mensal, notificações automáticas, autocomplete de clientes, valor por pessoa, gráfico mensal, top 5, notícias -->
+<!-- v5: modelo comissão de fornecedor, fornecedores editáveis, notificações feito/adiar + lembretes, clientes editáveis, NFS-e Itapoá, gerenciar viagem -->
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.14.0/dist/tabler-icons.min.css">
 <style>
@@ -247,7 +247,7 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
           <select id="f-cia"><option>LATAM</option><option>GOL</option><option>Azul</option><option>American</option><option>TAP</option><option>Emirates</option><option>Outra</option></select>
         </div>
         <div class="col"><label>Tipo de emissão</label>
-          <select id="f-tipo"><option>LATAM Milhas</option><option>Azul Milhas</option><option>GOL Smiles</option><option>Pátria Consolidadora</option><option>Cativa Operadora</option><option>GDS Amadeus</option></select>
+          <select id="f-tipo" onchange="tipoChanged()"><option>LATAM Milhas</option><option>Azul Milhas</option><option>GOL Smiles</option><option>Pátria Consolidadora</option><option>Cativa Operadora</option><option>BWT Operadora</option><option>GDS Amadeus</option></select>
         </div>
         <div class="col"><label>Trecho</label>
           <select id="f-idavolta" onchange="toggleIdaVolta()"><option value="IV">Ida e volta</option><option value="SI">Só ida</option></select>
@@ -273,7 +273,7 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
           <select id="f-cia-ida"><option>LATAM</option><option>GOL</option><option>Azul</option><option>American</option><option>TAP</option><option>Emirates</option><option>Outra</option></select>
         </div>
         <div class="col"><label>Tipo emissão ida</label>
-          <select id="f-tipo-ida"><option>LATAM Milhas</option><option>Azul Milhas</option><option>GOL Smiles</option><option>Pátria Consolidadora</option><option>Cativa Operadora</option><option>GDS Amadeus</option></select>
+          <select id="f-tipo-ida" onchange="tipoChanged()"><option>LATAM Milhas</option><option>Azul Milhas</option><option>GOL Smiles</option><option>Pátria Consolidadora</option><option>Cativa Operadora</option><option>BWT Operadora</option><option>GDS Amadeus</option></select>
         </div>
       </div>
       <div class="row">
@@ -296,7 +296,7 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
           <select id="f-cia-volta"><option>LATAM</option><option>GOL</option><option>Azul</option><option>American</option><option>TAP</option><option>Emirates</option><option>Outra</option></select>
         </div>
         <div class="col"><label>Tipo emissão volta</label>
-          <select id="f-tipo-volta"><option>LATAM Milhas</option><option>Azul Milhas</option><option>GOL Smiles</option><option>Pátria Consolidadora</option><option>Cativa Operadora</option><option>GDS Amadeus</option></select>
+          <select id="f-tipo-volta"><option>LATAM Milhas</option><option>Azul Milhas</option><option>GOL Smiles</option><option>Pátria Consolidadora</option><option>Cativa Operadora</option><option>BWT Operadora</option><option>GDS Amadeus</option></select>
         </div>
       </div>
       <div class="row">
@@ -314,15 +314,25 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
     <div class="raised" style="background:var(--blue-bg);border-color:var(--blue)">
       <p style="font-size:12px;font-weight:600;color:var(--blue-text);margin-bottom:8px">Custo total calculado</p>
       <div class="row">
+        <div class="col"><label>Modelo de receita</label>
+          <select id="f-modelo-sep" onchange="modeloChange()"><option value="markup">Milhas / repasse</option><option value="comissao">Comissão de fornecedor</option></select>
+        </div>
         <div class="col"><label>Conta da venda</label>
           <select id="f-conta-sep" onchange="contaChange()"><option value="PJ">PJ — Agência (com imposto)</option><option value="PF">PF — Particular (sem imposto)</option></select>
         </div>
+      </div>
+      <div class="row" id="campos-markup-sep">
         <div class="col"><label>Custo total agência (R$)</label><input type="number" id="f-custo-total-sep" readonly style="font-weight:600"></div>
         <div class="col"><label>Valor cobrado cliente (R$)</label><input type="number" id="f-venda-sep" placeholder="0" oninput="calcLucroSep()"></div>
         <div class="col"><label>Imposto (R$)</label><input type="number" id="f-imposto-sep" placeholder="0" oninput="calcLucroSep()"></div>
       </div>
+      <div class="row" id="campos-comissao-sep" style="display:none">
+        <div class="col"><label>Valor da venda — sistema do fornecedor (R$)</label><input type="number" id="f-venda-forn-sep" placeholder="0" oninput="calcLucroSep()"></div>
+        <div class="col"><label>Comissão recebida (R$)</label><input type="number" id="f-comissao-forn-sep" placeholder="0" oninput="calcLucroSep()"></div>
+        <div class="col"><label>Imposto s/ comissão (R$)</label><input type="number" id="f-imposto-forn-sep" placeholder="0" oninput="calcLucroSep()"></div>
+      </div>
       <div class="row">
-        <div class="col"><label>Comissão (R$)</label><input type="number" id="f-comissao-sep" placeholder="0" oninput="calcLucroSep()"></div>
+        <div class="col"><label>Comissão parceiro (R$)</label><input type="number" id="f-comissao-sep" placeholder="0" oninput="calcLucroSep()"></div>
         <div class="col"><label>Comissão para (vendedor/parceiro)</label><input id="f-comissao-quem-sep" placeholder="Nome do vendedor ou parceiro"></div>
         <div class="col"><label>Lucro líquido (R$)</label><input type="number" id="f-lucro-sep" readonly style="font-weight:600"></div>
       </div>
@@ -343,15 +353,25 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
   <div class="raised" id="bloco-fin-unico">
     <div class="sec-title"><i class="ti ti-cash"></i> Financeiro</div>
     <div class="row">
+      <div class="col"><label>Modelo de receita</label>
+        <select id="f-modelo" onchange="modeloChange()"><option value="markup">Milhas / repasse — cobro o valor que eu definir</option><option value="comissao">Comissão de fornecedor (Pátria, Cativa, BWT...)</option></select>
+      </div>
       <div class="col"><label>Conta da venda</label>
         <select id="f-conta" onchange="contaChange()"><option value="PJ">PJ — Agência (com imposto)</option><option value="PF">PF — Particular (sem imposto)</option></select>
       </div>
+    </div>
+    <div class="row" id="campos-markup">
       <div class="col"><label>Custo agência (R$)</label><input type="number" id="f-custo" placeholder="0" oninput="calcLucro()"></div>
       <div class="col"><label>Valor cobrado (R$)</label><input type="number" id="f-venda" placeholder="0" oninput="calcLucro()"></div>
       <div class="col"><label>Imposto (R$)</label><input type="number" id="f-imposto" placeholder="0" oninput="calcLucro()"></div>
     </div>
+    <div class="row" id="campos-comissao" style="display:none">
+      <div class="col"><label>Valor da venda — sistema do fornecedor (R$)</label><input type="number" id="f-venda-forn" placeholder="0" oninput="calcLucro()"></div>
+      <div class="col"><label>Comissão recebida (R$)</label><input type="number" id="f-comissao-forn" placeholder="0" oninput="calcLucro()"></div>
+      <div class="col"><label>Imposto s/ comissão (R$)</label><input type="number" id="f-imposto-forn" placeholder="0" oninput="calcLucro()"></div>
+    </div>
     <div class="row">
-      <div class="col"><label>Comissão (R$)</label><input type="number" id="f-comissao" placeholder="0" oninput="calcLucro()"></div>
+      <div class="col"><label>Comissão parceiro (R$)</label><input type="number" id="f-comissao" placeholder="0" oninput="calcLucro()"></div>
       <div class="col"><label>Comissão para (vendedor/parceiro)</label><input id="f-comissao-quem" placeholder="Nome do vendedor ou parceiro"></div>
       <div class="col"><label>Lucro líquido (R$)</label><input type="number" id="f-lucro" readonly></div>
     </div>
@@ -362,6 +382,7 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
       </div>
       <div class="col" id="col-fiado" style="display:none"><label>Data cobrança</label><input type="date" id="f-datacobranca"></div>
       <div class="col"><label>Nota fiscal</label><select id="f-nf"><option>Pendente</option><option>Emitida</option></select></div>
+      <div class="col" style="display:flex;align-items:flex-end"><button type="button" class="btn" style="width:100%;white-space:nowrap" onclick="window.open('https://nfse-itapoa.atende.net/autoatendimento/servicos/nfse','_blank')"><i class="ti ti-file-invoice"></i> Emitir NFS-e Itapoá</button></div>
     </div>
   </div>
 
@@ -374,6 +395,7 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
       </div>
       <div class="col" id="col-fiado-sep" style="display:none"><label>Data cobrança</label><input type="date" id="f-datacobranca-sep"></div>
       <div class="col"><label>Nota fiscal</label><select id="f-nf-sep"><option>Pendente</option><option>Emitida</option></select></div>
+      <div class="col" style="display:flex;align-items:flex-end"><button type="button" class="btn" style="width:100%;white-space:nowrap" onclick="window.open('https://nfse-itapoa.atende.net/autoatendimento/servicos/nfse','_blank')"><i class="ti ti-file-invoice"></i> Emitir NFS-e Itapoá</button></div>
     </div>
   </div>
 
@@ -540,6 +562,14 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
     <button class="tab-btn" onclick="filtNotif('checkin',this)">Check-in</button>
     <button class="tab-btn" onclick="filtNotif('cobranca',this)">Cobrança</button>
     <button class="tab-btn" onclick="filtNotif('posviagem',this)">Pós-viagem</button>
+    <button class="tab-btn" onclick="filtNotif('lembrete',this)">Lembretes</button>
+  </div>
+  <div class="raised">
+    <div class="row" style="align-items:flex-end">
+      <div class="col" style="flex:2;min-width:200px"><label>Novo lembrete</label><input id="lb-texto" placeholder="Ex: ligar para cliente, renovar clube de milhas, cobrar parceiro..."></div>
+      <div class="col"><label>Data</label><input type="date" id="lb-data"></div>
+      <div class="col" style="max-width:150px;display:flex;align-items:flex-end"><button class="btn btn-primary" style="width:100%" onclick="addLembrete()"><i class="ti ti-plus"></i> Adicionar</button></div>
+    </div>
   </div>
   <div id="lista-notif"></div>
 </div>
@@ -578,6 +608,30 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
 </div>
 
 </div><!-- /main -->
+
+<!-- MODAL CLIENTE -->
+<div class="modal-overlay" id="modal-cliente">
+  <div class="modal" style="max-width:620px">
+    <div class="modal-title">
+      <span><i class="ti ti-user-edit"></i> Editar cliente</span>
+      <button class="btn btn-sm" onclick="fecharModalCliente()"><i class="ti ti-x"></i></button>
+    </div>
+    <div class="row">
+      <div class="col"><label>Nome</label><input id="mc-nome"></div>
+      <div class="col"><label>CPF</label><input id="mc-cpf"></div>
+    </div>
+    <div class="row">
+      <div class="col"><label>Telefone (WhatsApp)</label><input id="mc-tel"></div>
+      <div class="col"><label>E-mail</label><input id="mc-email"></div>
+    </div>
+    <label>Destinos desejados</label><input id="mc-futuros" placeholder="Ex: Europa, Dubai...">
+    <label>Anotações</label><textarea id="mc-obs" placeholder="Preferências, datas importantes, histórico..."></textarea>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-primary" onclick="salvarCliente()"><i class="ti ti-check"></i> Salvar</button>
+      <button class="btn" onclick="fecharModalCliente()">Cancelar</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL EDITAR -->
 <div class="modal-overlay" id="modal-editar">
@@ -654,6 +708,43 @@ function toggleIdaVolta(){
   if(si)document.getElementById('f-ret').value='';
 }
 
+// ============ MODELO DE RECEITA ============
+const TIPOS_COMISSAO=['Pátria Consolidadora','Cativa Operadora','BWT Operadora','GDS Amadeus'];
+function tipoChanged(){
+  if(locTipo==='sim'){
+    const t=document.getElementById('f-tipo').value;
+    document.getElementById('f-modelo').value=TIPOS_COMISSAO.includes(t)?'comissao':'markup';
+  }else{
+    const ti=document.getElementById('f-tipo-ida').value;
+    document.getElementById('f-modelo-sep').value=TIPOS_COMISSAO.includes(ti)?'comissao':'markup';
+  }
+  modeloChange();
+}
+function modeloChange(){
+  const m=document.getElementById('f-modelo').value;
+  const ms=document.getElementById('f-modelo-sep').value;
+  document.getElementById('campos-markup').style.display=m==='markup'?'flex':'none';
+  document.getElementById('campos-comissao').style.display=m==='comissao'?'flex':'none';
+  document.getElementById('campos-markup-sep').style.display=ms==='markup'?'flex':'none';
+  document.getElementById('campos-comissao-sep').style.display=ms==='comissao'?'flex':'none';
+  calcLucro();calcLucroSep();
+}
+function dadosFinanceiros(sep){
+  const sfx=sep?'-sep':'';
+  const modo=document.getElementById('f-modelo'+sfx).value;
+  const comP=parseFloat(document.getElementById('f-comissao'+sfx).value)||0;
+  if(modo==='comissao'){
+    const venda=parseFloat(document.getElementById('f-venda-forn'+sfx).value)||0;
+    const comF=parseFloat(document.getElementById('f-comissao-forn'+sfx).value)||0;
+    const impC=parseFloat(document.getElementById('f-imposto-forn'+sfx).value)||0;
+    return{modeloReceita:'comissao',venda:String(venda),custo:String(venda-comF),imposto:String(impC),comissao:String(comP),comissaoFornecedor:String(comF),impostoComissao:String(impC),lucro:(comF-impC-comP).toFixed(2)};
+  }
+  const venda=parseFloat(document.getElementById('f-venda'+sfx).value)||0;
+  const custo=parseFloat(document.getElementById(sep?'f-custo-total-sep':'f-custo').value)||0;
+  const imp=parseFloat(document.getElementById('f-imposto'+sfx).value)||0;
+  return{modeloReceita:'markup',venda:String(venda),custo:String(custo),imposto:String(imp),comissao:String(comP),comissaoFornecedor:'',impostoComissao:'',lucro:(venda-custo-imp-comP).toFixed(2)};
+}
+
 function contaChange(){
   const conta=(locTipo==='sim'?document.getElementById('f-conta'):document.getElementById('f-conta-sep')).value;
   const impU=document.getElementById('f-imposto'),impS=document.getElementById('f-imposto-sep');
@@ -673,27 +764,19 @@ function porPessoaHTML(venda,lucro){
 }
 
 function calcLucro(){
-  const v=parseFloat(document.getElementById('f-venda').value)||0;
-  const c=parseFloat(document.getElementById('f-custo').value)||0;
-  const i=parseFloat(document.getElementById('f-imposto').value)||0;
-  const com=parseFloat(document.getElementById('f-comissao').value)||0;
-  const lucro=v-c-i-com;
-  document.getElementById('f-lucro').value=lucro.toFixed(2);
-  const pp=document.getElementById('pp-unico');const h=porPessoaHTML(v,lucro);
+  const d=dadosFinanceiros(false);
+  document.getElementById('f-lucro').value=d.lucro;
+  const pp=document.getElementById('pp-unico');const h=porPessoaHTML(parseFloat(d.venda),parseFloat(d.lucro));
   pp.style.display=h?'block':'none';if(h)pp.innerHTML=h;
 }
 
 function calcLucroSep(){
   const ci=parseFloat(document.getElementById('f-custo-ida').value)||0;
   const cv=parseFloat(document.getElementById('f-custo-volta').value)||0;
-  const total=ci+cv;
-  document.getElementById('f-custo-total-sep').value=total.toFixed(2);
-  const vnd=parseFloat(document.getElementById('f-venda-sep').value)||0;
-  const imp=parseFloat(document.getElementById('f-imposto-sep').value)||0;
-  const com=parseFloat(document.getElementById('f-comissao-sep').value)||0;
-  const lucro=vnd-total-imp-com;
-  document.getElementById('f-lucro-sep').value=lucro.toFixed(2);
-  const pp=document.getElementById('pp-sep');const h=porPessoaHTML(vnd,lucro);
+  document.getElementById('f-custo-total-sep').value=(ci+cv).toFixed(2);
+  const d=dadosFinanceiros(true);
+  document.getElementById('f-lucro-sep').value=d.lucro;
+  const pp=document.getElementById('pp-sep');const h=porPessoaHTML(parseFloat(d.venda),parseFloat(d.lucro));
   pp.style.display=h?'block':'none';if(h)pp.innerHTML=h;
 }
 
@@ -759,13 +842,9 @@ function salvarEmissao(){
       ret:document.getElementById('f-ret').value,
       checkin:document.getElementById('f-checkin').value,
       idaVolta:document.getElementById('f-idavolta').value,
-      custo:document.getElementById('f-custo').value,
-      venda:document.getElementById('f-venda').value,
-      imposto:document.getElementById('f-imposto').value,
-      comissao:document.getElementById('f-comissao').value,
+      ...dadosFinanceiros(false),
       comissaoQuem:document.getElementById('f-comissao-quem').value,
       conta:document.getElementById('f-conta').value,
-      lucro:document.getElementById('f-lucro').value,
       pgto:document.getElementById('f-pgto').value,
       datacobranca:document.getElementById('f-datacobranca').value,
       nf:document.getElementById('f-nf').value,
@@ -797,13 +876,9 @@ function salvarEmissao(){
       vmilheiroVolta:document.getElementById('f-vmilheiro-volta').value,
       // FINANCEIRO CONSOLIDADO
       idaVolta:'IV',
-      custo:document.getElementById('f-custo-total-sep').value,
-      venda:document.getElementById('f-venda-sep').value,
-      imposto:document.getElementById('f-imposto-sep').value,
-      comissao:document.getElementById('f-comissao-sep').value,
+      ...dadosFinanceiros(true),
       comissaoQuem:document.getElementById('f-comissao-quem-sep').value,
       conta:document.getElementById('f-conta-sep').value,
-      lucro:document.getElementById('f-lucro-sep').value,
       pgto:document.getElementById('f-pgto-sep').value,
       datacobranca:document.getElementById('f-datacobranca-sep').value,
       nf:document.getElementById('f-nf-sep').value,
@@ -820,8 +895,11 @@ function salvarEmissao(){
 }
 
 function limparFormNova(){
-  ['f-nome','f-cpf','f-tel','f-email','f-agente','f-obs','f-futuros','f-vendedor','f-vendedor-contato','f-comissao','f-comissao-quem','f-comissao-sep','f-comissao-quem-sep','f-pnr','f-orig','f-dest','f-custo','f-venda','f-imposto','f-lucro','f-pnr-ida','f-orig-ida','f-dest-ida','f-custo-ida','f-milhas-ida','f-vmilheiro-ida','f-pnr-volta','f-orig-volta','f-dest-volta','f-custo-volta','f-milhas-volta','f-vmilheiro-volta','f-custo-total-sep','f-venda-sep','f-imposto-sep','f-lucro-sep'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-nome','f-cpf','f-tel','f-email','f-agente','f-obs','f-futuros','f-vendedor','f-vendedor-contato','f-comissao','f-comissao-quem','f-comissao-sep','f-comissao-quem-sep','f-venda-forn','f-comissao-forn','f-imposto-forn','f-venda-forn-sep','f-comissao-forn-sep','f-imposto-forn-sep','f-pnr','f-orig','f-dest','f-custo','f-venda','f-imposto','f-lucro','f-pnr-ida','f-orig-ida','f-dest-ida','f-custo-ida','f-milhas-ida','f-vmilheiro-ida','f-pnr-volta','f-orig-volta','f-dest-volta','f-custo-volta','f-milhas-volta','f-vmilheiro-volta','f-custo-total-sep','f-venda-sep','f-imposto-sep','f-lucro-sep'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   setLocTipo('sim');
+  document.getElementById('f-modelo').value='markup';
+  document.getElementById('f-modelo-sep').value='markup';
+  modeloChange();
   corSelecionada='#378ADD';
   document.querySelectorAll('.cor-dot').forEach((d,i)=>{d.classList.toggle('sel',i===0);});
   document.getElementById('f-pax').value='1';
@@ -888,13 +966,33 @@ function renderEmissoes(){
       <td>${tipoBadge(e.tipo||e.tipoIda)}${vendedorHtml}</td>
       <td style="color:var(--green);font-weight:600">R$${parseFloat(e.lucro||0).toLocaleString('pt-BR')}${parseInt(e.pax)>1&&e.venda?`<br><span style="font-size:11px;color:var(--text2);font-weight:400">${fmtR((parseFloat(e.venda)||0)/parseInt(e.pax))}/pessoa</span>`:''}</td>
       <td>${statusBadge(e.status)}${e.conta?`<br><span class="badge ${e.conta==='PF'?'b-amber':'b-blue'}" style="margin-top:3px">${e.conta}</span>`:''}</td>
-      <td style="display:flex;gap:4px">
+      <td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-sm" onclick="gerenciarViagem(${e.id})" title="Abre o site da companhia e copia o localizador"><i class="ti ti-plane"></i> Gerenciar viagem</button>
         ${contatoBtn}
         <button class="btn btn-icon" onclick="abrirEditar(${e.id})" title="Editar"><i class="ti ti-edit"></i></button>
         <button class="btn btn-icon" onclick="excluirEmissao(${e.id})" title="Excluir"><i class="ti ti-trash"></i></button>
       </td>
     </tr>`;
   }).join('');
+}
+const CIA_GERENCIAR={
+  'LATAM':'https://www.latamairlines.com/br/pt/minhas-viagens',
+  'GOL':'https://b2c.voegol.com.br/minhas-viagens',
+  'Azul':'https://www.voeazul.com.br/br/pt/home/minhas-viagens',
+  'American':'https://www.aa.com/reservation/view/find-your-reservation',
+  'TAP':'https://www.flytap.com/pt-br/gerir-reserva',
+  'Emirates':'https://www.emirates.com/br/portuguese/manage-booking/'
+};
+function gerenciarViagem(id){
+  const e=loadEM().find(x=>x.id===id);if(!e)return;
+  const pnr=e.pnr||e.pnrIda||'';
+  if(pnr){try{navigator.clipboard.writeText(pnr);}catch(err){}}
+  const cias=e.locTipo==='nao'?[e.ciaIda,e.ciaVolta]:[(e.cia||'').split(' / ')[0]];
+  const abertos=new Set();
+  cias.filter(Boolean).forEach(c=>{
+    const u=CIA_GERENCIAR[c]||('https://www.google.com/search?q='+encodeURIComponent('gerenciar reserva '+c));
+    if(!abertos.has(u)){abertos.add(u);window.open(u,'_blank');}
+  });
 }
 function filtrarEmissoes(v){emFiltro=v;renderEmissoes();}
 function filtrarStatus(v){emStatus=v;renderEmissoes();}
@@ -1004,12 +1102,7 @@ function renderDash(){
   document.getElementById('d-impostos').textContent='R$'+impostos.toLocaleString('pt-BR');
   document.getElementById('d-receber').textContent='R$'+receber.toLocaleString('pt-BR');
   document.getElementById('d-nf').textContent=nfPend;
-  const urg=[];
-  ems.forEach(e=>{
-    const checkins=[e.checkin,e.checkinVolta].filter(Boolean);
-    checkins.forEach(ch=>{const dias=Math.round((new Date(ch)-now)/(864e5));if(dias>=0&&dias<=2)urg.push(`<div class="notif warn"><div class="nt">Check-in ${dias===0?'hoje':dias===1?'amanhã':'em 2 dias'}</div>${e.nome} · ${e.cia||e.ciaIda||''}</div>`);});
-    if(e.pgto==='Fiado'&&e.datacobranca){const dias=Math.round((new Date(e.datacobranca)-now)/(864e5));if(dias<=0)urg.push(`<div class="notif danger"><div class="nt">Cobrança vencida</div>${e.nome} · R$${parseFloat(e.venda||0).toLocaleString('pt-BR')}</div>`);else if(dias<=3)urg.push(`<div class="notif warn"><div class="nt">Cobrança em ${dias} dias</div>${e.nome} · R$${parseFloat(e.venda||0).toLocaleString('pt-BR')}</div>`);}
-  });
+  const urg=gerarNotifs().filter(n=>n.prioridade==='danger'||n.prioridade==='warn').slice(0,6).map(n=>`<div class="notif ${n.prioridade}"><div class="nt">${n.titulo}</div>${n.desc}</div>`);
   document.getElementById('d-urgentes').innerHTML=urg.length?urg.join(''):'<p style="color:var(--text2);font-size:13px">Nenhuma ação urgente.</p>';
   const tipos={};ems.forEach(e=>{const t=e.tipo||e.tipoIda||'Outros';tipos[t]=(tipos[t]||0)+1;});
   const total=ems.length||1;const colors=['#378ADD','#639922','#EF9F27','#E24B4A','#534AB7','#1D9E75'];
@@ -1179,46 +1272,104 @@ function resetUpsell(){showUpStep('up-step0');}
 
 // ============ CLIENTES ============
 function renderClientes(filtro){
-  let cls=loadCL();if(filtro)cls=cls.filter(c=>c.nome.toLowerCase().includes(filtro.toLowerCase()));
+  let cls=loadCL().map((c,i)=>({...c,_i:i}));
+  if(filtro)cls=cls.filter(c=>c.nome.toLowerCase().includes(filtro.toLowerCase()));
   const el=document.getElementById('lista-clientes');
   if(!cls.length){el.innerHTML='<p style="color:var(--text2);font-size:13px">Nenhum cliente ainda.</p>';return;}
-  el.innerHTML=cls.map(c=>{const ini=c.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();return`<div class="raised" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px"><div class="avatar">${ini}</div><div style="flex:1"><p style="font-weight:600;font-size:14px">${c.nome}</p><p style="font-size:12px;color:var(--text2)">${c.email||'—'} · ${c.tel||'—'}</p><p style="font-size:12px;margin-top:4px"><span class="badge b-blue">${c.viagens} viagen${c.viagens!==1?'s':''}</span>${c.futuros?` <span class="badge b-green" style="margin-left:4px">Deseja: ${c.futuros}</span>`:''}</p></div>${c.tel?`<button class="wa-btn" onclick="window.open('https://wa.me/55'+('${c.tel}'.replace(/\D/g,'')))">WhatsApp</button>`:''}</div>`;}).join('');
+  el.innerHTML=cls.map(c=>{const ini=c.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();return`<div class="raised" style="display:flex;align-items:flex-start;gap:12px;margin-bottom:10px"><div class="avatar">${ini}</div><div style="flex:1"><p style="font-weight:600;font-size:14px">${c.nome}</p><p style="font-size:12px;color:var(--text2)">${c.email||'—'} · ${c.tel||'—'}${c.cpf?' · CPF '+c.cpf:''}</p><p style="font-size:12px;margin-top:4px"><span class="badge b-blue">${c.viagens} viagen${c.viagens!==1?'s':''}</span>${c.futuros?` <span class="badge b-green" style="margin-left:4px">Deseja: ${c.futuros}</span>`:''}</p>${c.obsCliente?`<p style="font-size:12px;color:var(--text2);margin-top:4px"><i class="ti ti-note"></i> ${c.obsCliente}</p>`:''}</div>${c.tel?`<button class="wa-btn" style="margin-right:6px" onclick="window.open('https://wa.me/55'+('${c.tel}'.replace(/\D/g,'')))">WhatsApp</button>`:''}<button class="btn btn-icon" onclick="abrirEditarCliente(${c._i})" title="Editar cliente"><i class="ti ti-edit"></i></button></div>`;}).join('');
 }
 function filtrarClientes(v){renderClientes(v);}
+let clienteEditIdx=null;
+function abrirEditarCliente(i){
+  const c=loadCL()[i];if(!c)return;
+  clienteEditIdx=i;
+  document.getElementById('mc-nome').value=c.nome||'';
+  document.getElementById('mc-cpf').value=c.cpf||'';
+  document.getElementById('mc-tel').value=c.tel||'';
+  document.getElementById('mc-email').value=c.email||'';
+  document.getElementById('mc-futuros').value=c.futuros||'';
+  document.getElementById('mc-obs').value=c.obsCliente||'';
+  document.getElementById('modal-cliente').classList.add('on');
+}
+function fecharModalCliente(){document.getElementById('modal-cliente').classList.remove('on');clienteEditIdx=null;}
+function salvarCliente(){
+  const cls=loadCL();const c=cls[clienteEditIdx];if(!c)return;
+  const nomeAntigo=c.nome;
+  const novoNome=document.getElementById('mc-nome').value.trim();
+  if(!novoNome){alert('O nome não pode ficar vazio.');return;}
+  Object.assign(c,{nome:novoNome,cpf:document.getElementById('mc-cpf').value,tel:document.getElementById('mc-tel').value,email:document.getElementById('mc-email').value,futuros:document.getElementById('mc-futuros').value,obsCliente:document.getElementById('mc-obs').value});
+  saveCL(cls);
+  if(novoNome!==nomeAntigo){const ems=loadEM();let mudou=false;ems.forEach(e=>{if(e.nome===nomeAntigo){e.nome=novoNome;mudou=true;}});if(mudou)saveEM(ems);}
+  preencherDatalist();fecharModalCliente();renderClientes();
+}
 
 // ============ NOTIFICAÇÕES ============
 function diasAte(dataStr){
   const hoje=new Date();hoje.setHours(0,0,0,0);
   return Math.round((new Date(dataStr+'T00:00')-hoje)/(864e5));
 }
+const SK_NS='ag_notif_estado_v1';
+const SK_LB='ag_lembretes_v1';
+function loadNS(){try{const v=localStorage.getItem(SK_NS);return v?JSON.parse(v):{};}catch(e){return{};}}
+function saveNS(d){localStorage.setItem(SK_NS,JSON.stringify(d));}
+function loadLB(){try{const v=localStorage.getItem(SK_LB);return v?JSON.parse(v):[];}catch(e){return[];}}
+function saveLB(d){localStorage.setItem(SK_LB,JSON.stringify(d));}
+let notifTabAtual='todas';
 function gerarNotifs(){
   autoAtualizarStatus();
   const ems=loadEM();const notifs=[];
   ems.forEach(e=>{
     // Check-in (até 7 dias antes)
     const checkins=[{d:e.checkin,label:'ida'},{d:e.checkinVolta,label:'volta'}].filter(c=>c.d);
-    checkins.forEach(ch=>{const dias=diasAte(ch.d);if(dias>=0&&dias<=7)notifs.push({tipo:'checkin',prioridade:dias===0?'danger':dias<=2?'warn':'info',ord:dias,titulo:`Check-in ${ch.label} ${dias===0?'HOJE':dias===1?'amanhã':`em ${dias} dias`}`,desc:`${e.nome} · ${e.cia||e.ciaIda||''} · ${e.pnr||e.pnrIda||''}`});});
+    checkins.forEach(ch=>{const dias=diasAte(ch.d);if(dias>=0&&dias<=7)notifs.push({id:`ck_${e.id}_${ch.d}`,tipo:'checkin',prioridade:dias===0?'danger':dias<=2?'warn':'info',ord:dias,titulo:`Check-in ${ch.label} ${dias===0?'HOJE':dias===1?'amanhã':`em ${dias} dias`}`,desc:`${e.nome} · ${e.cia||e.ciaIda||''} · ${e.pnr||e.pnrIda||''}`});});
     // Embarque próximo (até 5 dias)
     if(e.saida){const dias=diasAte(e.saida);
-      if(dias>=0&&dias<=5)notifs.push({tipo:'checkin',prioridade:dias<=1?'warn':'info',ord:dias,titulo:dias===0?'Embarque HOJE':`Embarque em ${dias} dia${dias>1?'s':''}`,desc:`${e.nome} · ${e.orig||''}→${e.dest||''}`});
+      if(dias>=0&&dias<=5)notifs.push({id:`emb_${e.id}_${e.saida}`,tipo:'checkin',prioridade:dias<=1?'warn':'info',ord:dias,titulo:dias===0?'Embarque HOJE':`Embarque em ${dias} dia${dias>1?'s':''}`,desc:`${e.nome} · ${e.orig||''}→${e.dest||''}`});
       // Pós-viagem (até 5 dias após o fim)
       const fim=e.ret||e.saida;const dFim=diasAte(fim);
-      if(dFim<0&&dFim>=-5)notifs.push({tipo:'posviagem',prioridade:'ok',ord:10+Math.abs(dFim),titulo:'Pós-viagem: pedir avaliação e indicar próximo destino',desc:`${e.nome} · voltou há ${Math.abs(dFim)} dia(s)${e.futuros?' · deseja: '+e.futuros:''}`});
+      if(dFim<0&&dFim>=-5)notifs.push({id:`pos_${e.id}`,tipo:'posviagem',prioridade:'ok',ord:10+Math.abs(dFim),titulo:'Pós-viagem: pedir avaliação e indicar próximo destino',desc:`${e.nome} · voltou há ${Math.abs(dFim)} dia(s)${e.futuros?' · deseja: '+e.futuros:''}`});
     }
     // Cobrança fiado (vencida ou até 7 dias)
     if(e.pgto==='Fiado'&&e.datacobranca){const dias=diasAte(e.datacobranca);
-      if(dias<=0)notifs.push({tipo:'cobranca',prioridade:'danger',ord:-5,titulo:dias===0?'Cobrança vence HOJE':`Cobrança vencida há ${Math.abs(dias)} dia(s)`,desc:`${e.nome} · ${fmtR(e.venda)}`});
-      else if(dias<=7)notifs.push({tipo:'cobranca',prioridade:'warn',ord:dias,titulo:`Cobrança em ${dias} dia${dias>1?'s':''}`,desc:`${e.nome} · ${fmtR(e.venda)}`});}
+      if(dias<=0)notifs.push({id:`cob_${e.id}_${e.datacobranca}`,tipo:'cobranca',prioridade:'danger',ord:-5,titulo:dias===0?'Cobrança vence HOJE':`Cobrança vencida há ${Math.abs(dias)} dia(s)`,desc:`${e.nome} · ${fmtR(e.venda)}`});
+      else if(dias<=7)notifs.push({id:`cob_${e.id}_${e.datacobranca}`,tipo:'cobranca',prioridade:'warn',ord:dias,titulo:`Cobrança em ${dias} dia${dias>1?'s':''}`,desc:`${e.nome} · ${fmtR(e.venda)}`});}
     // NF pendente em conta PJ com viagem encerrada
-    if(e.nf==='Pendente'&&e.conta!=='PF'&&e.status==='Encerrado')notifs.push({tipo:'cobranca',prioridade:'warn',ord:8,titulo:'NF pendente de emissão',desc:`${e.nome} · ${fmtR(e.venda)}`});
+    if(e.nf==='Pendente'&&e.conta!=='PF'&&e.status==='Encerrado')notifs.push({id:`nf_${e.id}`,tipo:'cobranca',prioridade:'warn',ord:8,titulo:'NF pendente de emissão',desc:`${e.nome} · ${fmtR(e.venda)}`,nf:true});
   });
-  notifs.sort((a,b)=>a.ord-b.ord);
-  return notifs;
+  // Lembretes manuais
+  loadLB().forEach(l=>{
+    const dias=diasAte(l.data);
+    if(dias<=0)notifs.push({id:`lem_${l.id}`,tipo:'lembrete',prioridade:dias<0?'warn':'danger',ord:dias-0.5,titulo:dias===0?'Lembrete HOJE':`Lembrete (desde ${l.data.split('-').reverse().join('/')})`,desc:l.texto,lembrete:l.id});
+    else notifs.push({id:`lem_${l.id}`,tipo:'lembrete',prioridade:'info',ord:20+dias,titulo:`Lembrete em ${dias} dia${dias>1?'s':''} — ${l.data.split('-').reverse().join('/')}`,desc:l.texto,lembrete:l.id});
+  });
+  // Filtra feitos/adiados
+  const est=loadNS();const hojeStr=new Date().toISOString().slice(0,10);
+  return notifs.filter(n=>{const s=est[n.id];if(!s)return true;if(s.feito)return false;if(s.adiadoAte&&hojeStr<s.adiadoAte)return false;return true;}).sort((a,b)=>a.ord-b.ord);
+}
+function notifFeito(id){
+  const est=loadNS();est[id]={feito:true};saveNS(est);
+  if(id.startsWith('lem_'))saveLB(loadLB().filter(l=>'lem_'+l.id!==id));
+  renderNotif(notifTabAtual);
+}
+function notifAdiar(id){
+  const est=loadNS();
+  const amanha=new Date(Date.now()+864e5).toISOString().slice(0,10);
+  est[id]={adiadoAte:amanha};saveNS(est);
+  renderNotif(notifTabAtual);
+}
+function addLembrete(){
+  const texto=document.getElementById('lb-texto').value.trim();
+  if(!texto){alert('Escreva o lembrete.');return;}
+  const data=document.getElementById('lb-data').value||new Date().toISOString().slice(0,10);
+  const lbs=loadLB();lbs.push({id:Date.now(),texto,data});saveLB(lbs);
+  document.getElementById('lb-texto').value='';document.getElementById('lb-data').value='';
+  renderNotif(notifTabAtual);
 }
 function renderNotif(tipo){
+  notifTabAtual=tipo||notifTabAtual;
   const notifs=gerarNotifs();
-  const filtradas=tipo==='todas'?notifs:notifs.filter(n=>n.tipo===tipo);
-  document.getElementById('lista-notif').innerHTML=filtradas.length?filtradas.map(n=>`<div class="notif ${n.prioridade}"><strong>${n.titulo}</strong> — ${n.desc}</div>`).join(''):'<p style="color:var(--text2);font-size:13px">Nenhuma notificação no momento. Elas aparecem automaticamente conforme as datas se aproximam (check-in até 7 dias, embarque até 5, cobranças e pós-viagem).</p>';
+  const filtradas=notifTabAtual==='todas'?notifs:notifs.filter(n=>n.tipo===notifTabAtual);
+  document.getElementById('lista-notif').innerHTML=filtradas.length?filtradas.map(n=>`<div class="notif ${n.prioridade}" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap"><div style="flex:1;min-width:180px"><strong>${n.titulo}</strong> — ${n.desc}</div>${n.nf?`<button class="btn btn-sm" onclick="window.open('https://nfse-itapoa.atende.net/autoatendimento/servicos/nfse','_blank')"><i class="ti ti-file-invoice"></i> Emitir NFS-e</button>`:''}<button class="btn btn-sm" onclick="notifFeito('${n.id}')" title="Não mostrar mais"><i class="ti ti-check"></i> Feito</button><button class="btn btn-sm" onclick="notifAdiar('${n.id}')" title="Volta a aparecer amanhã"><i class="ti ti-clock-plus"></i> +1 dia</button></div>`).join(''):'<p style="color:var(--text2);font-size:13px">Nenhuma notificação no momento. Elas aparecem automaticamente conforme as datas se aproximam (check-in até 7 dias, embarque até 5, cobranças, pós-viagem e seus lembretes).</p>';
   atualizarBadgeNotif(notifs);
 }
 function atualizarBadgeNotif(notifs){
@@ -1279,16 +1430,58 @@ function renderFinanceiro(){
 }
 
 // ============ FORNECEDORES ============
-const FORNECEDORES=[
+const SK_FN='ag_fornecedores_v1';
+const FORN_PADRAO=[
   {nome:'Pátria Consolidadora',tipo:'Consolidadora',wa:'5511999990001',tg:''},
   {nome:'Cativa Operadora',tipo:'Operadora',wa:'5511999990002',tg:'cativa_op'},
+  {nome:'BWT Operadora',tipo:'Operadora',wa:'',tg:''},
   {nome:'LATAM Milhas',tipo:'Milhas',wa:'',tg:''},
   {nome:'Azul Tudo Azul',tipo:'Milhas',wa:'5511999990003',tg:''},
   {nome:'GOL Smiles',tipo:'Milhas',wa:'',tg:''},
   {nome:'Seguro Viagem',tipo:'Seguro',wa:'5511999990004',tg:'seguroviagem'},
 ];
+function loadFN(){try{const v=localStorage.getItem(SK_FN);return v?JSON.parse(v):FORN_PADRAO.slice();}catch(e){return FORN_PADRAO.slice();}}
+function saveFN(d){localStorage.setItem(SK_FN,JSON.stringify(d));}
+let fornEditIdx=null;
 function renderFornecedores(){
-  document.getElementById('lista-fornecedores').innerHTML=FORNECEDORES.map(f=>{const ini=f.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();return`<div class="fornec-row"><div class="avatar" style="background:var(--bg2);color:var(--text2)">${ini}</div><div style="flex:1"><p style="font-weight:600;font-size:13px">${f.nome}</p><p style="font-size:11px;color:var(--text2)">${f.tipo}</p></div>${f.wa?`<button class="wa-btn" onclick="window.open('https://wa.me/${f.wa}','_blank')" style="margin-right:6px">WhatsApp</button>`:''}${f.tg?`<button class="tg-btn" onclick="window.open('https://t.me/${f.tg}','_blank')">Telegram</button>`:''}</div>`;}).join('');
+  const list=loadFN();
+  document.getElementById('lista-fornecedores').innerHTML=
+    `<div style="margin-bottom:10px;display:flex;justify-content:flex-end"><button class="btn btn-primary btn-sm" onclick="abrirFornForm(null)"><i class="ti ti-plus"></i> Adicionar fornecedor</button></div>`+
+    `<div id="forn-form" style="display:none;border:0.5px solid var(--blue);border-radius:var(--radius-lg);padding:12px;margin-bottom:12px;background:var(--blue-bg)">
+      <div class="row">
+        <div class="col"><label>Nome</label><input id="fn-nome" placeholder="Nome do fornecedor"></div>
+        <div class="col"><label>Tipo</label><input id="fn-tipo" placeholder="Consolidadora, Operadora, Milhas..."></div>
+        <div class="col"><label>WhatsApp (com DDD)</label><input id="fn-wa" placeholder="47999999999"></div>
+        <div class="col"><label>Telegram (sem @)</label><input id="fn-tg" placeholder="usuario"></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="salvarForn()"><i class="ti ti-check"></i> Salvar</button>
+        <button class="btn btn-sm" onclick="document.getElementById('forn-form').style.display='none'">Cancelar</button>
+      </div>
+    </div>`+
+    list.map((f,i)=>{const ini=f.nome.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();return`<div class="fornec-row"><div class="avatar" style="background:var(--bg2);color:var(--text2)">${ini}</div><div style="flex:1"><p style="font-weight:600;font-size:13px">${f.nome}</p><p style="font-size:11px;color:var(--text2)">${f.tipo||''}</p></div>${f.wa?`<button class="wa-btn" onclick="window.open('https://wa.me/${f.wa}','_blank')" style="margin-right:6px">WhatsApp</button>`:''}${f.tg?`<button class="tg-btn" onclick="window.open('https://t.me/${f.tg}','_blank')" style="margin-right:6px">Telegram</button>`:''}<button class="btn btn-icon" onclick="abrirFornForm(${i})" title="Editar"><i class="ti ti-edit"></i></button><button class="btn btn-icon" onclick="excluirForn(${i})" title="Excluir"><i class="ti ti-trash"></i></button></div>`;}).join('');
+}
+function abrirFornForm(i){
+  fornEditIdx=i;
+  const f=i===null?{nome:'',tipo:'',wa:'',tg:''}:loadFN()[i];
+  document.getElementById('fn-nome').value=f.nome||'';
+  document.getElementById('fn-tipo').value=f.tipo||'';
+  document.getElementById('fn-wa').value=f.wa||'';
+  document.getElementById('fn-tg').value=f.tg||'';
+  const form=document.getElementById('forn-form');
+  form.style.display='block';form.scrollIntoView({behavior:'smooth',block:'center'});
+}
+function salvarForn(){
+  const nome=document.getElementById('fn-nome').value.trim();
+  if(!nome){alert('Preencha o nome do fornecedor.');return;}
+  const f={nome,tipo:document.getElementById('fn-tipo').value.trim(),wa:soDigitos(document.getElementById('fn-wa').value),tg:document.getElementById('fn-tg').value.trim().replace(/^@/,'')};
+  const list=loadFN();
+  if(fornEditIdx===null)list.push(f);else list[fornEditIdx]=f;
+  saveFN(list);fornEditIdx=null;renderFornecedores();
+}
+function excluirForn(i){
+  if(!confirm('Excluir este fornecedor?'))return;
+  const list=loadFN();list.splice(i,1);saveFN(list);renderFornecedores();
 }
 
 // INIT
