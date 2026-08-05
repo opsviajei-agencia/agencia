@@ -145,6 +145,21 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
 /* COR STRIP */
 .cor-strip{width:4px;border-radius:4px;height:100%;min-height:36px;flex-shrink:0}
 @media(max-width:600px){.topbar-nav{gap:0}.nav-btn{padding:6px 10px;font-size:12px}.main{padding:12px}.localizador-choice{flex-direction:column}}
+/* ===== v6 SERVICOS / PRODUTOS ===== */
+.tv-choice{display:flex;gap:12px;margin:10px 0}
+.tv-opt{flex:1;border:2px solid var(--border);border-radius:var(--radius-lg);padding:14px;cursor:pointer;text-align:center;transition:all .15s}
+.tv-opt:hover{border-color:var(--blue);background:var(--blue-bg)}
+.tv-opt.sel{border-color:var(--blue);background:var(--blue-bg)}
+.tv-opt i{font-size:22px;color:var(--text2);margin-bottom:6px;display:block}
+.tv-opt.sel i{color:var(--blue)}
+.tv-opt p{font-size:13px;font-weight:600}
+.tv-opt span{font-size:11px;color:var(--text2)}
+.prod-item{border:0.5px solid var(--border);border-left:3px solid var(--purple);border-radius:var(--radius-lg);padding:12px;margin-bottom:10px;background:var(--bg)}
+.prod-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.prod-head strong{font-size:13px;flex:1}
+.prod-tot{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;margin-top:12px;padding-top:10px;border-top:0.5px dashed var(--border)}
+.prod-tot b{font-weight:600}
+@media(max-width:600px){.tv-choice{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -219,8 +234,26 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
     </div>
   </div>
 
-  <!-- ESCOLHA LOCALIZADOR -->
+  <!-- TIPO DE VENDA (v6) -->
   <div class="raised">
+    <div class="sec-title"><i class="ti ti-shopping-bag"></i> O que está sendo vendido?</div>
+    <div class="tv-choice">
+      <div class="tv-opt sel" id="tv-aereo" onclick="setTipoVenda('aereo')">
+        <i class="ti ti-plane-tilt"></i>
+        <p>Aéreo (+ serviços)</p>
+        <span>Passagem, com ou sem hotel/seguro/carro</span>
+      </div>
+      <div class="tv-opt" id="tv-servicos" onclick="setTipoVenda('servicos')">
+        <i class="ti ti-bed"></i>
+        <p>Somente serviços</p>
+        <span>Hotel, seguro, carro, passeio, pacote</span>
+      </div>
+    </div>
+    <div id="aviso-servicos" style="display:none;margin-top:8px;font-size:12px;padding:8px 10px;border-radius:var(--radius)" class="b-purple"><i class="ti ti-info-circle"></i> Venda sem aéreo — preencha os serviços abaixo e o financeiro normalmente.</div>
+  </div>
+
+  <!-- ESCOLHA LOCALIZADOR -->
+  <div class="raised" id="card-localizador">
     <div class="sec-title"><i class="ti ti-route"></i> Tipo de emissão</div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Ida e volta no mesmo localizador?</p>
     <div class="localizador-choice">
@@ -341,7 +374,7 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
   </div>
 
   <!-- VENDEDOR DAS MILHAS -->
-  <div class="raised">
+  <div class="raised" id="card-vendedor">
     <div class="sec-title"><i class="ti ti-user-dollar"></i> Vendedor das milhas / fornecedor</div>
     <div class="row">
       <div class="col"><label>Nome do vendedor</label><input id="f-vendedor" placeholder="Quem vendeu as milhas"></div>
@@ -397,6 +430,15 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
       <div class="col"><label>Nota fiscal</label><select id="f-nf-sep"><option>Pendente</option><option>Emitida</option></select></div>
       <div class="col" style="display:flex;align-items:flex-end"><button type="button" class="btn" style="width:100%;white-space:nowrap" onclick="window.open('https://nfse-itapoa.atende.net/autoatendimento/servicos/nfse','_blank')"><i class="ti ti-file-invoice"></i> Emitir NFS-e Itapoá</button></div>
     </div>
+  </div>
+
+  <!-- SERVICOS E PRODUTOS (v6) -->
+  <div class="raised">
+    <div class="sec-title"><i class="ti ti-briefcase"></i> Serviços e produtos vendidos <span class="badge b-purple" id="prod-count" style="margin-left:auto">0</span></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Hotel, seguro viagem, aluguel de carro, passeios, transfer, pacote — em milhas, consolidadora, operadora ou direto com fornecedor.</p>
+    <div id="prod-lista"></div>
+    <button class="btn btn-primary btn-sm" onclick="addProduto()"><i class="ti ti-plus"></i> Adicionar serviço</button>
+    <div id="prod-resumo"></div>
   </div>
 
   <!-- COR E EXTRAS -->
@@ -582,6 +624,19 @@ input[readonly]{background:var(--bg2);color:var(--text2)}
   </div>
   <div class="metric-grid" id="fin-metrics"></div>
   <div class="row" id="fin-conta-split"></div>
+  <div class="raised" id="fin-produtos-card" style="display:none;padding:0;overflow:hidden">
+    <div class="sec-title" style="font-size:14px;padding:14px 14px 0"><i class="ti ti-briefcase"></i> Vendas por tipo de serviço</div>
+    <table><thead><tr><th>Tipo</th><th>Qtd</th><th>Origem principal</th><th>Receita</th><th>Custo</th><th>Lucro</th></tr></thead>
+    <tbody id="fin-produtos"></tbody></table>
+  </div>
+  <div class="raised" style="border-left:3px solid var(--amber)">
+    <div class="sec-title" style="font-size:14px"><i class="ti ti-shield-lock"></i> Backup dos dados</div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:10px">Seus dados ficam salvos <strong>neste navegador</strong>. Baixe um backup com frequência — é a sua única cópia.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="exportarDados()"><i class="ti ti-download"></i> Baixar backup (JSON)</button>
+      <label class="btn btn-sm" style="cursor:pointer"><i class="ti ti-upload"></i> Restaurar backup<input type="file" accept="application/json" style="display:none" onchange="importarDados(this)"></label>
+    </div>
+  </div>
   <div class="raised" style="padding:0;overflow:hidden">
     <div class="sec-title" style="font-size:14px;padding:14px 14px 0"><i class="ti ti-calendar-stats"></i> Produção mês a mês</div>
     <table><thead><tr><th>Mês</th><th>Emissões</th><th>Receita</th><th>Custo</th><th>Impostos</th><th>Comissões</th><th>Lucro líquido</th></tr></thead>
@@ -830,7 +885,24 @@ function salvarEmissao(){
     criado:new Date().toISOString(),
     locTipo
   };
-  if(locTipo==='sim'){
+  if(tipoVenda==='servicos'){
+    if(!PRODUTOS.length){alert('Adicione pelo menos um serviço (hotel, seguro, carro...) antes de salvar.');return;}
+    const p0=PRODUTOS[0]||{};
+    Object.assign(em,{
+      pnr:p0.localizador||'',
+      cia:'—',
+      tipo:'Serviços / Terrestre',
+      orig:'',dest:(p0.desc||p0.tipo||'').slice(0,24),
+      saida:p0.dataIn||'',ret:p0.dataOut||'',checkin:'',
+      idaVolta:'IV',
+      ...dadosFinanceiros(false),
+      comissaoQuem:document.getElementById('f-comissao-quem').value,
+      conta:document.getElementById('f-conta').value,
+      pgto:document.getElementById('f-pgto').value,
+      datacobranca:document.getElementById('f-datacobranca').value,
+      nf:document.getElementById('f-nf').value,
+    });
+  } else if(locTipo==='sim'){
     const pnr=document.getElementById('f-pnr').value.trim();
     if(!pnr){alert('Preencha o localizador.');return;}
     Object.assign(em,{
@@ -887,6 +959,7 @@ function salvarEmissao(){
       tipo:document.getElementById('f-tipo-ida').value,
     });
   }
+  aplicarProdutos(em);
   const list=loadEM();list.unshift(em);saveEM(list);
   upsertCliente(em);
   limparFormNova();
@@ -896,6 +969,8 @@ function salvarEmissao(){
 
 function limparFormNova(){
   ['f-nome','f-cpf','f-tel','f-email','f-agente','f-obs','f-futuros','f-vendedor','f-vendedor-contato','f-comissao','f-comissao-quem','f-comissao-sep','f-comissao-quem-sep','f-venda-forn','f-comissao-forn','f-imposto-forn','f-venda-forn-sep','f-comissao-forn-sep','f-imposto-forn-sep','f-pnr','f-orig','f-dest','f-custo','f-venda','f-imposto','f-lucro','f-pnr-ida','f-orig-ida','f-dest-ida','f-custo-ida','f-milhas-ida','f-vmilheiro-ida','f-pnr-volta','f-orig-volta','f-dest-volta','f-custo-volta','f-milhas-volta','f-vmilheiro-volta','f-custo-total-sep','f-venda-sep','f-imposto-sep','f-lucro-sep'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  PRODUTOS=[];renderProdutos();
+  setTipoVenda('aereo');
   setLocTipo('sim');
   document.getElementById('f-modelo').value='markup';
   document.getElementById('f-modelo-sep').value='markup';
@@ -963,7 +1038,7 @@ function renderEmissoes(){
       <td><strong>${e.nome}</strong>${parseInt(e.pax)>1?` <span class="badge b-gray">${e.pax} pax</span>`:''}<br><span style="font-size:11px;color:var(--text2)">${e.pnr||e.pnrIda||'—'}${e.pnrVolta?' / '+e.pnrVolta:''}</span></td>
       <td>${rota} ${trechoBadge}<br><span style="font-size:11px;color:var(--text2)">${cia}</span></td>
       <td>${e.saida?e.saida.split('-').reverse().join('/'):'—'}</td>
-      <td>${tipoBadge(e.tipo||e.tipoIda)}${vendedorHtml}</td>
+      <td>${tipoBadge(e.tipo||e.tipoIda)}${badgeProdutos(e)}${vendedorHtml}</td>
       <td style="color:var(--green);font-weight:600">R$${parseFloat(e.lucro||0).toLocaleString('pt-BR')}${parseInt(e.pax)>1&&e.venda?`<br><span style="font-size:11px;color:var(--text2);font-weight:400">${fmtR((parseFloat(e.venda)||0)/parseInt(e.pax))}/pessoa</span>`:''}</td>
       <td>${statusBadge(e.status)}${e.conta?`<br><span class="badge ${e.conta==='PF'?'b-amber':'b-blue'}" style="margin-top:3px">${e.conta}</span>`:''}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap;align-items:center">
@@ -1016,14 +1091,14 @@ function abrirEditar(id){
     </div>
     <div class="row">
       <div class="col"><label>Conta da venda</label><select id="e-conta"><option value="PJ" ${em.conta!=='PF'?'selected':''}>PJ — Agência</option><option value="PF" ${em.conta==='PF'?'selected':''}>PF — Particular</option></select></div>
-      <div class="col"><label>Valor cobrado (R$)</label><input type="number" id="e-venda" value="${em.venda||0}" oninput="recalcEdit()"></div>
-      <div class="col"><label>Custo agência (R$)</label><input type="number" id="e-custo" value="${em.custo||0}" oninput="recalcEdit()"></div>
-      <div class="col"><label>Imposto (R$)</label><input type="number" id="e-imposto" value="${em.imposto||0}" oninput="recalcEdit()"></div>
+      <div class="col"><label>Valor cobrado — aéreo (R$)</label><input type="number" id="e-venda" value="${em.aereoVenda!==undefined?em.aereoVenda:(em.venda||0)}" oninput="recalcEdit()"></div>
+      <div class="col"><label>Custo agência — aéreo (R$)</label><input type="number" id="e-custo" value="${em.aereoCusto!==undefined?em.aereoCusto:(em.custo||0)}" oninput="recalcEdit()"></div>
+      <div class="col"><label>Imposto — aéreo (R$)</label><input type="number" id="e-imposto" value="${em.aereoImposto!==undefined?em.aereoImposto:(em.imposto||0)}" oninput="recalcEdit()"></div>
     </div>
     <div class="row">
       <div class="col"><label>Comissão (R$)</label><input type="number" id="e-comissao" value="${em.comissao||0}" oninput="recalcEdit()"></div>
       <div class="col"><label>Comissão para</label><input id="e-comissao-quem" value="${em.comissaoQuem||''}"></div>
-      <div class="col"><label>Lucro líquido (R$)</label><input type="number" id="e-lucro" value="${em.lucro||0}" readonly></div>
+      <div class="col"><label>Lucro — aéreo (R$)</label><input type="number" id="e-lucro" value="${em.aereoLucro!==undefined?em.aereoLucro:(em.lucro||0)}" readonly></div>
     </div>
     <div class="row">
       <div class="col"><label>Vendedor das milhas</label><input id="e-vendedor" value="${em.vendedor||''}"></div>
@@ -1034,10 +1109,18 @@ function abrirEditar(id){
       <div class="col"><label>Observações</label><textarea id="e-obs">${em.obs||''}</textarea></div>
       <div class="col"><label>Destinos futuros</label><input id="e-futuros" value="${em.futuros||''}"></div>
     </div>
+    <div class="raised" style="margin-top:14px;border-left:3px solid var(--purple)">
+      <div class="sec-title" style="font-size:14px"><i class="ti ti-briefcase"></i> Serviços e produtos <span class="badge b-purple" id="e-prod-count" style="margin-left:auto">0</span></div>
+      <div id="e-prod-lista"></div>
+      <button class="btn btn-primary btn-sm" onclick="addProdutoS('edit')"><i class="ti ti-plus"></i> Adicionar serviço</button>
+      <div id="e-total-wrap"></div>
+    </div>
     <label>Cor de identificação</label>
     <div class="cor-picker" style="margin-top:8px">
       ${cores.map(c=>`<div class="cor-dot ${em.cor===c?'sel':''}" style="background:${c}" data-cor="${c}" onclick="selCorEdit(this)"></div>`).join('')}
     </div>`;
+  EDIT_PRODUTOS=JSON.parse(JSON.stringify(em.produtos||[]));
+  renderProdScope('edit');
   editandoId=id;
   document.getElementById('modal-editar').classList.add('on');
 }
@@ -1484,11 +1567,256 @@ function excluirForn(i){
   const list=loadFN();list.splice(i,1);saveFN(list);renderFornecedores();
 }
 
+// ==================== v6: SERVICOS E PRODUTOS ====================
+const PROD_TIPOS=['Hotel','Seguro viagem','Aluguel de carro','Passeio / ingresso','Transfer','Pacote','Cruzeiro','Chip / eSIM','Outro'];
+const PROD_ORIGENS=['Milhas','Consolidadora','Operadora','Direto com fornecedor','Cartão / pontos','Outro'];
+let PRODUTOS=[];
+let EDIT_PRODUTOS=[];
+let tipoVenda='aereo';
+
+function escH(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function prodVendaTot(p){return (parseFloat(p.venda)||0)*(parseInt(p.qtd)||1);}
+function prodCustoTot(p){return (parseFloat(p.custo)||0)*(parseInt(p.qtd)||1);}
+function totaisProdutos(arr){
+  var venda=0,custo=0,imposto=0;
+  (arr||[]).forEach(function(p){venda+=prodVendaTot(p);custo+=prodCustoTot(p);imposto+=parseFloat(p.imposto)||0;});
+  return{venda:venda,custo:custo,imposto:imposto,lucro:venda-custo-imposto};
+}
+function badgeProdutos(e){
+  const n=(e.produtos||[]).length;
+  if(!n)return '';
+  return ' <span class="badge b-purple" title="'+escH((e.produtos||[]).map(function(p){return p.tipo;}).join(', '))+'"><i class="ti ti-briefcase"></i> '+n+'</span>';
+}
+
+function setTipoVenda(t){
+  tipoVenda=t;
+  const a=document.getElementById('tv-aereo'),sv=document.getElementById('tv-servicos');
+  if(a)a.classList.toggle('sel',t==='aereo');
+  if(sv)sv.classList.toggle('sel',t==='servicos');
+  const aereo=t==='aereo';
+  const cl=document.getElementById('card-localizador');if(cl)cl.style.display=aereo?'block':'none';
+  const cv=document.getElementById('card-vendedor');if(cv)cv.style.display=aereo?'block':'none';
+  const bu=document.getElementById('bloco-unico');if(bu)bu.style.display=aereo&&locTipo==='sim'?'block':'none';
+  const bs=document.getElementById('bloco-separado');if(bs)bs.style.display=aereo&&locTipo==='nao'?'block':'none';
+  const av=document.getElementById('aviso-servicos');if(av)av.style.display=aereo?'none':'block';
+  if(!aereo&&!PRODUTOS.length)addProduto();
+}
+const _setLocTipo0=setLocTipo;
+setLocTipo=function(t){
+  _setLocTipo0(t);
+  if(tipoVenda==='servicos'){
+    ['bloco-unico','bloco-separado','card-localizador','card-vendedor'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});
+  }
+};
+
+function prodArr(scope){return scope==='edit'?EDIT_PRODUTOS:PRODUTOS;}
+function novoProduto(){
+  return{id:Date.now()+Math.floor(Math.random()*10000),tipo:'Hotel',origem:'Operadora',fornecedor:'',desc:'',localizador:'',dataIn:'',dataOut:'',qtd:1,custo:'',venda:'',imposto:''};
+}
+function addProduto(){addProdutoS('nova');}
+function addProdutoS(scope){prodArr(scope).push(novoProduto());renderProdScope(scope);}
+function removerProdutoS(scope,id){
+  if(scope==='edit')EDIT_PRODUTOS=EDIT_PRODUTOS.filter(function(p){return p.id!==id;});
+  else PRODUTOS=PRODUTOS.filter(function(p){return p.id!==id;});
+  renderProdScope(scope);
+}
+function updProdutoS(scope,id,campo,val){
+  const p=prodArr(scope).find(function(x){return x.id===id;});
+  if(!p)return;
+  p[campo]=val;
+  if(scope==='edit')atualizarTotalEdit();else calcResumoProdutos();
+}
+function prodListHTML(arr,scope){
+  if(!arr.length)return '<p style="font-size:13px;color:var(--text2);padding:6px 0">Nenhum serviço lançado.</p>';
+  return arr.map(function(p){
+    const q="'"+scope+"',"+p.id;
+    return '<div class="prod-item">'
+    +'<div class="prod-head"><i class="ti ti-package" style="color:var(--purple)"></i><strong>'+escH(p.tipo)+'</strong>'
+    +'<span style="font-size:12px;color:var(--green);font-weight:600">'+fmtR(prodVendaTot(p)-prodCustoTot(p)-(parseFloat(p.imposto)||0))+'</span>'
+    +'<button class="btn btn-icon" onclick="removerProdutoS('+q+')" title="Remover"><i class="ti ti-trash"></i></button></div>'
+    +'<div class="row">'
+    +'<div class="col"><label>Tipo</label><select onchange="updProdutoS('+q+',\'tipo\',this.value);renderProdScope(\''+scope+'\')">'+PROD_TIPOS.map(function(t){return '<option '+(p.tipo===t?'selected':'')+'>'+t+'</option>';}).join('')+'</select></div>'
+    +'<div class="col"><label>Como foi emitido</label><select onchange="updProdutoS('+q+',\'origem\',this.value)">'+PROD_ORIGENS.map(function(t){return '<option '+(p.origem===t?'selected':'')+'>'+t+'</option>';}).join('')+'</select></div>'
+    +'<div class="col"><label>Fornecedor</label><input value="'+escH(p.fornecedor)+'" placeholder="Ex: Cativa, Booking, Assist Card" oninput="updProdutoS('+q+',\'fornecedor\',this.value)"></div>'
+    +'<div class="col"><label>Localizador / voucher</label><input value="'+escH(p.localizador)+'" placeholder="Nº da reserva" oninput="updProdutoS('+q+',\'localizador\',this.value)"></div>'
+    +'</div><div class="row">'
+    +'<div class="col"><label>Descrição</label><input value="'+escH(p.desc)+'" placeholder="Ex: Hotel Ibis Lisboa — 4 noites" oninput="updProdutoS('+q+',\'desc\',this.value)"></div>'
+    +'<div class="col"><label>Início</label><input type="date" value="'+escH(p.dataIn)+'" oninput="updProdutoS('+q+',\'dataIn\',this.value)"></div>'
+    +'<div class="col"><label>Fim</label><input type="date" value="'+escH(p.dataOut)+'" oninput="updProdutoS('+q+',\'dataOut\',this.value)"></div>'
+    +'<div class="col" style="min-width:80px;max-width:100px"><label>Qtd</label><input type="number" min="1" value="'+(p.qtd||1)+'" oninput="updProdutoS('+q+',\'qtd\',this.value);renderTotLinha('+q+')"></div>'
+    +'</div><div class="row">'
+    +'<div class="col"><label>Custo unitário (R$)</label><input type="number" value="'+escH(p.custo)+'" placeholder="0" oninput="updProdutoS('+q+',\'custo\',this.value)"></div>'
+    +'<div class="col"><label>Venda unitária (R$)</label><input type="number" value="'+escH(p.venda)+'" placeholder="0" oninput="updProdutoS('+q+',\'venda\',this.value)"></div>'
+    +'<div class="col"><label>Imposto (R$)</label><input type="number" value="'+escH(p.imposto)+'" placeholder="0" oninput="updProdutoS('+q+',\'imposto\',this.value)"></div>'
+    +'</div></div>';
+  }).join('');
+}
+function renderTotLinha(){}
+function renderProdScope(scope){
+  if(scope==='edit'){
+    const el=document.getElementById('e-prod-lista');if(!el)return;
+    el.innerHTML=prodListHTML(EDIT_PRODUTOS,'edit');
+    const c=document.getElementById('e-prod-count');if(c)c.textContent=EDIT_PRODUTOS.length;
+    atualizarTotalEdit();
+  }else{
+    const el=document.getElementById('prod-lista');if(!el)return;
+    el.innerHTML=prodListHTML(PRODUTOS,'nova');
+    const c=document.getElementById('prod-count');if(c)c.textContent=PRODUTOS.length;
+    calcResumoProdutos();
+  }
+}
+function renderProdutos(){renderProdScope('nova');}
+function removerProduto(id){removerProdutoS('nova',id);}
+function calcResumoProdutos(){
+  const el=document.getElementById('prod-resumo');if(!el)return;
+  if(!PRODUTOS.length){el.innerHTML='';return;}
+  const t=totaisProdutos(PRODUTOS);
+  el.innerHTML='<div class="prod-tot"><span>Venda serviços: <b style="color:var(--green)">'+fmtR(t.venda)+'</b></span><span>Custo: <b style="color:var(--red)">'+fmtR(t.custo)+'</b></span><span>Imposto: <b style="color:var(--red)">'+fmtR(t.imposto)+'</b></span><span>Lucro serviços: <b style="color:var(--green)">'+fmtR(t.lucro)+'</b></span></div>';
+}
+function atualizarTotalEdit(){
+  const el=document.getElementById('e-total-wrap');if(!el)return;
+  const t=totaisProdutos(EDIT_PRODUTOS);
+  const g=function(id){return parseFloat((document.getElementById(id)||{}).value)||0;};
+  el.innerHTML='<div class="prod-tot"><span>Total cobrado: <b style="color:var(--green)">'+fmtR(g('e-venda')+t.venda)+'</b></span><span>Custo total: <b style="color:var(--red)">'+fmtR(g('e-custo')+t.custo)+'</b></span><span>Imposto total: <b style="color:var(--red)">'+fmtR(g('e-imposto')+t.imposto)+'</b></span><span>Lucro total: <b style="color:var(--green)">'+fmtR(g('e-lucro')+t.lucro)+'</b></span></div>';
+}
+
+// ---- totais consolidados (aereo + servicos) ----
+function recomputarTotais(em){
+  const t=totaisProdutos(em.produtos);
+  const av=parseFloat(em.aereoVenda)||0,ac=parseFloat(em.aereoCusto)||0,ai=parseFloat(em.aereoImposto)||0,al=parseFloat(em.aereoLucro)||0;
+  em.produtosVenda=t.venda.toFixed(2);em.produtosCusto=t.custo.toFixed(2);
+  em.produtosImposto=t.imposto.toFixed(2);em.produtosLucro=t.lucro.toFixed(2);
+  em.venda=(av+t.venda).toFixed(2);
+  em.custo=(ac+t.custo).toFixed(2);
+  em.imposto=(ai+t.imposto).toFixed(2);
+  em.lucro=(al+t.lucro).toFixed(2);
+  return em;
+}
+function aplicarProdutos(em){
+  em.tipoVenda=tipoVenda;
+  em.produtos=JSON.parse(JSON.stringify(PRODUTOS));
+  em.aereoVenda=em.venda||'0';em.aereoCusto=em.custo||'0';
+  em.aereoImposto=em.imposto||'0';em.aereoLucro=em.lucro||'0';
+  return recomputarTotais(em);
+}
+
+// ---- editar: recalculo e salvamento ----
+const _recalcEdit0=recalcEdit;
+recalcEdit=function(){_recalcEdit0();atualizarTotalEdit();};
+const _salvarEdicao0=salvarEdicao;
+salvarEdicao=function(){
+  const id=editandoId;
+  const g=function(x){return (document.getElementById(x)||{}).value;};
+  const aV=g('e-venda'),aC=g('e-custo'),aI=g('e-imposto'),aL=g('e-lucro');
+  const prods=JSON.parse(JSON.stringify(EDIT_PRODUTOS));
+  _salvarEdicao0();
+  const list=loadEM();
+  const idx=list.findIndex(function(e){return e.id===id;});
+  if(idx>=0){
+    list[idx].produtos=prods;
+    list[idx].aereoVenda=aV;list[idx].aereoCusto=aC;
+    list[idx].aereoImposto=aI;list[idx].aereoLucro=aL;
+    recomputarTotais(list[idx]);
+    saveEM(list);
+    renderEmissoes();
+  }
+};
+
+// ---- financeiro: quadro por tipo de servico ----
+function renderProdutosFin(){
+  const card=document.getElementById('fin-produtos-card'),tb=document.getElementById('fin-produtos');
+  if(!card||!tb)return;
+  const sel=document.getElementById('fin-mes');
+  const filtro=sel&&sel.value?sel.value:'todos';
+  const ems=loadEM();
+  const base=filtro==='todos'?ems:ems.filter(function(e){return mesKey(e)===filtro;});
+  const g={};
+  base.forEach(function(e){(e.produtos||[]).forEach(function(p){
+    const k=p.tipo||'Outro';
+    if(!g[k])g[k]={n:0,rec:0,cus:0,imp:0,orig:{}};
+    g[k].n+=parseInt(p.qtd)||1;
+    g[k].rec+=prodVendaTot(p);g[k].cus+=prodCustoTot(p);g[k].imp+=parseFloat(p.imposto)||0;
+    const o=p.origem||'—';g[k].orig[o]=(g[k].orig[o]||0)+1;
+  });});
+  const ks=Object.keys(g);
+  card.style.display=ks.length?'block':'none';
+  if(!ks.length){tb.innerHTML='';return;}
+  const tot={n:0,rec:0,cus:0,imp:0};
+  tb.innerHTML=ks.map(function(k){
+    const x=g[k];tot.n+=x.n;tot.rec+=x.rec;tot.cus+=x.cus;tot.imp+=x.imp;
+    const top=Object.keys(x.orig).sort(function(a,b){return x.orig[b]-x.orig[a];})[0];
+    return '<tr><td><strong>'+escH(k)+'</strong></td><td>'+x.n+'</td><td><span class="badge b-purple">'+escH(top)+'</span></td><td>'+fmtR(x.rec)+'</td><td style="color:var(--red)">'+fmtR(x.cus)+'</td><td style="color:var(--green);font-weight:600">'+fmtR(x.rec-x.cus-x.imp)+'</td></tr>';
+  }).join('')+'<tr style="background:var(--bg2);font-weight:600"><td>TOTAL</td><td>'+tot.n+'</td><td>—</td><td>'+fmtR(tot.rec)+'</td><td style="color:var(--red)">'+fmtR(tot.cus)+'</td><td style="color:var(--green)">'+fmtR(tot.rec-tot.cus-tot.imp)+'</td></tr>';
+}
+const _renderFinanceiro0=renderFinanceiro;
+renderFinanceiro=function(){_renderFinanceiro0();renderProdutosFin();};
+
+// ---- backup / restauracao ----
+function exportarDados(){
+  const dump={_app:'AgenciaApp',_versao:'v6',_data:new Date().toISOString(),keys:{}};
+  Object.keys(localStorage).forEach(function(k){if(k.indexOf('ag_')===0)dump.keys[k]=localStorage.getItem(k);});
+  const blob=new Blob([JSON.stringify(dump,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='backup-agencia-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+}
+function importarDados(input){
+  const f=input.files&&input.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=function(){
+    try{
+      const d=JSON.parse(r.result);
+      if(!d.keys){alert('Arquivo de backup inválido.');return;}
+      if(!confirm('Isto vai SUBSTITUIR os dados atuais pelos do arquivo.\n\nUm backup do estado atual será baixado antes. Continuar?')){input.value='';return;}
+      exportarDados();
+      Object.keys(d.keys).forEach(function(k){localStorage.setItem(k,d.keys[k]);});
+      alert('Dados restaurados. A página vai recarregar.');
+      location.reload();
+    }catch(e){alert('Não foi possível ler o arquivo.');}
+  };
+  r.readAsText(f);
+}
+
+// ---- migracao NAO-DESTRUTIVA para v6 ----
+const SK_MIGR='ag_migracao_v6';
+function migrarV6(){
+  try{
+    if(localStorage.getItem(SK_MIGR))return;
+    localStorage.setItem('ag_backup_pre_v6',JSON.stringify({
+      data:new Date().toISOString(),
+      ag_emissoes_v3:localStorage.getItem(SK_EM),
+      ag_clientes_v3:localStorage.getItem(SK_CL)
+    }));
+    const list=loadEM();
+    list.forEach(function(e){
+      if(!Array.isArray(e.produtos))e.produtos=[];
+      if(e.aereoVenda===undefined){
+        e.aereoVenda=e.venda||'0';e.aereoCusto=e.custo||'0';
+        e.aereoImposto=e.imposto||'0';e.aereoLucro=e.lucro||'0';
+      }
+      if(!e.tipoVenda)e.tipoVenda='aereo';
+      if(e.produtosVenda===undefined){
+        e.produtosVenda='0.00';e.produtosCusto='0.00';
+        e.produtosImposto='0.00';e.produtosLucro='0.00';
+      }
+    });
+    saveEM(list);
+    localStorage.setItem(SK_MIGR,new Date().toISOString());
+    console.log('Migração v6 concluída: '+list.length+' emissões preservadas.');
+  }catch(err){
+    console.error('Migração v6 não aplicada — dados originais intactos.',err);
+  }
+}
+
 // INIT
+migrarV6();
 autoAtualizarStatus();
 preencherDatalist();
 renderDash();
 renderCotador();
+renderProdutos();
+setTipoVenda('aereo');
 </script>
 </body>
 </html>
