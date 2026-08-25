@@ -22,8 +22,18 @@ jobs:
           const url = (s.match(/https:\/\/[a-z0-9]+\.supabase\.co/) || [])[0];
           const key = (s.match(/sb_publishable_[A-Za-z0-9_-]+/) || [])[0];
           if (!url || !key) { console.error('URL ou chave nao encontrada em sync.js'); process.exit(1); }
-          const r = await fetch(url + '/rest/v1/', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
-          console.log('Supabase respondeu HTTP ' + r.status);
-          if (r.status >= 500) process.exit(1);
+          const alvos = ['/rest/v1/', '/auth/v1/settings'];
+          let ok = false;
+          for (const alvo of alvos) {
+            try {
+              const r = await fetch(url + alvo, { headers: { apikey: key } });
+              console.log(alvo + ' -> HTTP ' + r.status);
+              if (r.status < 500) ok = true;
+            } catch (e) {
+              console.error(alvo + ' -> falhou: ' + e.message);
+            }
+          }
+          if (!ok) { console.error('Projeto Supabase inacessivel'); process.exit(1); }
+          console.log('Projeto ativo. Pausa automatica adiada por mais 7 dias.');
           SCRIPT
           node ping.mjs
