@@ -1,0 +1,29 @@
+name: Keep Supabase Awake
+
+on:
+  schedule:
+    - cron: '13 11 */2 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ping no Supabase para evitar a pausa automatica do plano Free
+        run: |
+          cat > ping.mjs <<'SCRIPT'
+          import fs from 'node:fs';
+          const s = fs.readFileSync('sync.js', 'utf8');
+          const url = (s.match(/https:\/\/[a-z0-9]+\.supabase\.co/) || [])[0];
+          const key = (s.match(/sb_publishable_[A-Za-z0-9_-]+/) || [])[0];
+          if (!url || !key) { console.error('URL ou chave nao encontrada em sync.js'); process.exit(1); }
+          const r = await fetch(url + '/rest/v1/', { headers: { apikey: key, Authorization: 'Bearer ' + key } });
+          console.log('Supabase respondeu HTTP ' + r.status);
+          if (r.status >= 500) process.exit(1);
+          SCRIPT
+          node ping.mjs
