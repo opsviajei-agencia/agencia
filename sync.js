@@ -239,3 +239,24 @@
     sb.auth.signOut().then(function () { location.reload(); });
   };
 })();
+
+/* ==========================================================
+   Aviso de servidor fora do ar
+   ----------------------------------------------------------
+   Se o projeto Supabase estiver pausado, o login falha e a tela
+   mostra 'E-mail ou senha incorretos', o que confunde. Este bloco
+   detecta a queda e avisa o motivo real.
+   ========================================================== */
+(function () {
+  'use strict';
+  var HOST = 'https://bdzrmdfoyazhihiminnl.supabase.co';
+  fetch(HOST + '/auth/v1/health', { mode: 'no-cors', cache: 'no-store' })
+    .catch(function () {
+      var aviso = document.createElement('div');
+      aviso.textContent = 'SERVIDOR FORA DO AR: o banco de dados nao esta respondendo. Nao adianta trocar a senha. Entre em supabase.com/dashboard e clique em Resume project.';
+      aviso.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;background:#b91c1c;color:#fff;padding:12px 16px;font:600 14px system-ui,-apple-system,sans-serif;text-align:center;line-height:1.4';
+      function por() { if (document.body) document.body.appendChild(aviso); }
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', por);
+      else por();
+    });
+})();
