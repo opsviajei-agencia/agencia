@@ -1730,22 +1730,44 @@ function renderProdutosFin(){
   const filtro=sel&&sel.value?sel.value:'todos';
   const ems=loadEM();
   const base=filtro==='todos'?ems:ems.filter(function(e){return mesKey(e)===filtro;});
+  const num=function(v){return parseFloat(v)||0;};
   const g={};
-  base.forEach(function(e){(e.produtos||[]).forEach(function(p){
-    const k=p.tipo||'Outro';
+  const add=function(k,n,rec,cus,imp,orig){
     if(!g[k])g[k]={n:0,rec:0,cus:0,imp:0,orig:{}};
-    g[k].n+=parseInt(p.qtd)||1;
-    g[k].rec+=prodVendaTot(p);g[k].cus+=prodCustoTot(p);g[k].imp+=parseFloat(p.imposto)||0;
-    const o=p.origem||'—';g[k].orig[o]=(g[k].orig[o]||0)+1;
-  });});
-  const ks=Object.keys(g);
+    g[k].n+=n;g[k].rec+=rec;g[k].cus+=cus;g[k].imp+=imp;
+    const o=orig||'—';g[k].orig[o]=(g[k].orig[o]||0)+1;
+  };
+  base.forEach(function(e){
+    const prods=e.produtos||[];
+    const tp=totaisProdutos(prods);
+    // Residuo = total da emissao menos os servicos lancados. Em venda aerea e o proprio aereo;
+    // em venda de servicos e o valor digitado no bloco principal. Garante que a tabela feche com os KPIs.
+    const resV=num(e.venda)-tp.venda;
+    const resC=num(e.custo)-tp.custo;
+    const resI=num(e.imposto)-tp.imposto;
+    if(Math.abs(resV)>=0.01||Math.abs(resC)>=0.01){
+      if(e.tipoVenda==='servicos'){
+        const p0=prods[0]||{};
+        add(p0.tipo||'Serviços / Terrestre',prods.length?0:1,resV,resC,resI,p0.origem||e.tipo||'—');
+      }else{
+        add('Aéreo',1,resV,resC,resI,e.tipo||'—');
+      }
+    }
+    prods.forEach(function(p){
+      add(p.tipo||'Outro',parseInt(p.qtd)||1,prodVendaTot(p),prodCustoTot(p),num(p.imposto),p.origem);
+    });
+  });
+  const ks=Object.keys(g).sort(function(a,b){
+    if(a==='Aéreo')return -1;if(b==='Aéreo')return 1;
+    return g[b].rec-g[a].rec;
+  });
   card.style.display=ks.length?'block':'none';
   if(!ks.length){tb.innerHTML='';return;}
   const tot={n:0,rec:0,cus:0,imp:0};
   tb.innerHTML=ks.map(function(k){
     const x=g[k];tot.n+=x.n;tot.rec+=x.rec;tot.cus+=x.cus;tot.imp+=x.imp;
     const top=Object.keys(x.orig).sort(function(a,b){return x.orig[b]-x.orig[a];})[0];
-    return '<tr><td><strong>'+escH(k)+'</strong></td><td>'+x.n+'</td><td><span class="badge b-purple">'+escH(top)+'</span></td><td>'+fmtR(x.rec)+'</td><td style="color:var(--red)">'+fmtR(x.cus)+'</td><td style="color:var(--green);font-weight:600">'+fmtR(x.rec-x.cus-x.imp)+'</td></tr>';
+    return '<tr><td><strong>'+escH(k)+'</strong></td><td>'+x.n+'</td><td><span class="badge '+(k==='Aéreo'?'b-blue':'b-purple')+'">'+escH(top)+'</span></td><td>'+fmtR(x.rec)+'</td><td style="color:var(--red)">'+fmtR(x.cus)+'</td><td style="color:var(--green);font-weight:600">'+fmtR(x.rec-x.cus-x.imp)+'</td></tr>';
   }).join('')+'<tr style="background:var(--bg2);font-weight:600"><td>TOTAL</td><td>'+tot.n+'</td><td>—</td><td>'+fmtR(tot.rec)+'</td><td style="color:var(--red)">'+fmtR(tot.cus)+'</td><td style="color:var(--green)">'+fmtR(tot.rec-tot.cus-tot.imp)+'</td></tr>';
 }
 const _renderFinanceiro0=renderFinanceiro;
